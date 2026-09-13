@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет — KINETIX CLIENT</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dash-body">
+  <canvas id="cyberCanvas"></canvas>
+
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Навигация Кабинета -->
+  <header class="dash-navbar">
+    <div class="container dash-nav-container">
+      <div class="dash-nav-left">
+        <a href="index.html" class="logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">KINETIX</span>
+          <span class="logo-badge">CABINET</span>
+        </a>
+        <a href="index.html" class="back-home-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>На главную</span>
+        </a>
+      </div>
+
+      <div class="dash-nav-user" id="navUserBox" style="display: none;">
+        <div class="nav-user-chip" id="navUserChip">
+          <img src="https://minotar.net/avatar/steve/128" alt="Avatar" class="nav-avatar-mini" id="navAvatar">
+          <div class="nav-user-info">
+            <span class="nav-username" id="navUsername">Player1337</span>
+            <span class="nav-user-role" id="navUserRole">PRO LIFETIME</span>
+          </div>
+        </div>
+        <button class="btn-logout" id="logoutBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Выйти</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Основной контейнер -->
+  <main class="dash-main">
+    <div class="container">
+
+      <!-- 1. ЭКРАН АВТОРИЗАЦИИ (ЕСЛИ НЕ ЗАЛОГИНИЛСЯ) -->
+      <div class="auth-wrapper" id="authScreen">
+        <div class="auth-tabs">
+          <button class="auth-tab-btn active" id="tabLoginBtn">Вход в аккаунт</button>
+          <button class="auth-tab-btn" id="tabRegisterBtn">Регистрация</button>
+        </div>
+
+        <!-- Форма входа -->
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Логин или Email</label>
+            <div class="input-icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <input type="text" class="dash-input" id="loginUsername" placeholder="Ваш никнейм" required value="Player1337">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Пароль</label>
+            <div class="input-icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <input type="password" class="dash-input" id="loginPassword" placeholder="••••••••" required value="123456">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-glow">Войти в кабинет</button>
+        </form>
+
+        <!-- Форма регистрации -->
+        <form id="registerForm" style="display: none;">
+          <div class="form-group">
+            <label>Желаемый логин</label>
+            <div class="input-icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <input type="text" class="dash-input" id="regUsername" placeholder="Ваш Minecraft ник">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email адрес</label>
+            <div class="input-icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <input type="email" class="dash-input" id="regEmail" placeholder="name@example.com">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Лицензионный ключ (если есть)</label>
+            <div class="input-icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="7.5" cy="15.5" r="5.5"></circle>
+                <path d="m21 2-9.6 9.6"></path>
+                <path d="m15.5 7.5 3 3L22 7l-3-3"></path>
+              </svg>
+              <input type="text" class="dash-input" id="regKey" placeholder="KINETIX-XXXX-XXXX-XXXX">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Пароль</label>
+            <div class="input-icon-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <input type="password" class="dash-input" id="regPassword" placeholder="••••••••">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-glow">Создать аккаунт</button>
+        </form>
+
+        <div class="demo-login-box">
+          <button class="demo-login-btn" id="demoLoginBtn">
+            ⚡ Мгновенный демо-вход (В 1 клик)
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. ЭКРАН ДАШБОРДА (КОГДА АВТОРИЗОВАН) -->
+      <div class="dash-layout" id="dashScreen" style="display: none;">
+        
+        <!-- Сайдбар с навигацией -->
+        <aside class="dash-sidebar">
+          <div class="sidebar-profile">
+            <div class="profile-avatar-box">
+              <img src="https://minotar.net/avatar/steve/128" alt="Avatar" class="profile-avatar-img" id="sideAvatar">
+              <span class="avatar-badge" title="Online"></span>
+            </div>
+            <h3 class="profile-username" id="sideUsername">Player1337</h3>
+            <span class="profile-tag" id="sideUserTag">PRO LIFETIME</span>
+          </div>
+
+          <nav class="dash-menu">
+            <button class="dash-menu-item active" data-tab="overview">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <span>Обзор кабинета</span>
+            </button>
+
+            <button class="dash-menu-item" data-tab="downloads">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Загрузки софта</span>
+            </button>
+
+            <button class="dash-menu-item" data-tab="license">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="7.5" cy="15.5" r="5.5"></circle>
+                <path d="m21 2-9.6 9.6"></path>
+                <path d="m15.5 7.5 3 3L22 7l-3-3"></path>
+              </svg>
+              <span>Ключи и подписка</span>
+            </button>
+
+            <button class="dash-menu-item" data-tab="hwid">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span>Управление HWID</span>
+            </button>
+
+            <button class="dash-menu-item" data-tab="configs">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+              </svg>
+              <span>Cloud Конфиги</span>
+            </button>
+
+            <button class="dash-menu-item" data-tab="referrals">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>Рефералы (20%)</span>
+            </button>
+
+            <button class="dash-menu-item" data-tab="settings">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Настройки</span>
+            </button>
+
+            <!-- Кнопка Админ-панели (видна только Администратору) -->
+            <button class="dash-menu-item admin-only-item" data-tab="admin" id="adminMenuBtn" style="display: none; background: rgba(255, 51, 102, 0.1); border: 1px solid rgba(255, 51, 102, 0.4);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff3366" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              <span style="color: #ffd700; font-weight: 700;">👑 Админ-Панель</span>
+            </button>
+          </nav>
+        </aside>
+
+        <!-- Контентная область -->
+        <div class="dash-content">
+
+          <!-- 4 Верхние карточки статистики -->
+          <div class="dash-stats-row">
+            <div class="dash-stat-card">
+              <div class="stat-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div class="dash-stat-info">
+                <h4>Подписка</h4>
+                <div class="dash-stat-val" id="statSubDays" style="color: var(--neon-cyan);">Навсегда</div>
+              </div>
+            </div>
+
+            <div class="dash-stat-card">
+              <div class="stat-icon-wrap purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </div>
+              <div class="dash-stat-info">
+                <h4>HWID Статус</h4>
+                <div class="dash-stat-val" id="statHwidStatus" style="color: var(--neon-purple);">Привязан</div>
+              </div>
+            </div>
+
+            <div class="dash-stat-card">
+              <div class="stat-icon-wrap green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                </svg>
+              </div>
+              <div class="dash-stat-info">
+                <h4>Cloud Конфиги</h4>
+                <div class="dash-stat-val" id="statConfigsCount" style="color: var(--neon-green);">3 шт.</div>
+              </div>
+            </div>
+
+            <div class="dash-stat-card">
+              <div class="stat-icon-wrap pink">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23"></line>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+              <div class="dash-stat-info">
+                <h4>Баланс</h4>
+                <div class="dash-stat-val" id="statBalance" style="color: var(--neon-pink);">0 ₽</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 1: ОБЗОР -->
+          <div class="dash-tab-pane active" id="tab_overview">
+            <div class="sub-banner">
+              <div class="sub-banner-left">
+                <span class="sub-badge-large" id="subBadge">LIFETIME</span>
+                <div>
+                  <h2 class="sub-plan-title" id="subPlanName">KINETIX LIFETIME VIP</h2>
+                  <p class="sub-plan-expiry" id="subExpiryText">Бессрочный неограниченный доступ ко всем обновлениям</p>
+                </div>
+              </div>
+              <a href="#tab_downloads" class="btn btn-primary btn-glow" onclick="document.querySelector('[data-tab=downloads]').click()">Скачать софт</a>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">⚡</div>
+                  <h3>Быстрые действия</h3>
+                </div>
+              </div>
+              <div class="downloads-grid" style="margin-bottom: 0;">
+                <div class="dl-card" style="padding: 20px;">
+                  <h4>Скачать Kinetix Client .jar</h4>
+                  <p class="dl-desc">Свежий релиз Fabric 1.21.4 (Xyeta / Kinetix v1.2)</p>
+                  <a href="downloads/Kinetix-Client.jar" download class="btn btn-sm btn-primary">Скачать .jar</a>
+                </div>
+                <div class="dl-card" style="padding: 20px;">
+                  <h4>Сброс привязки HWID</h4>
+                  <p class="dl-desc">Перенесите чит на новый ПК в один клик</p>
+                  <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-tab=hwid]').click()">Сбросить</button>
+                </div>
+                <div class="dl-card" style="padding: 20px;">
+                  <h4>Активировать промокод</h4>
+                  <p class="dl-desc">Введите ключ для продления подписки</p>
+                  <button class="btn btn-sm btn-secondary" onclick="document.querySelector('[data-tab=license]').click()">Активация</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">🔔</div>
+                  <h3>Список обновлений (Changelog v1.2.0)</h3>
+                </div>
+              </div>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary); font-size: 0.95rem;">
+                <li style="display: flex; gap: 10px; align-items: center;">
+                  <span style="color: var(--neon-green);">✔</span>
+                  <span>Обновлены байпассы под <strong>GrimAC 2.0</strong>, <strong>Matrix</strong> и <strong>Vulcan</strong> на версии Minecraft 1.21.4</span>
+                </li>
+                <li style="display: flex; gap: 10px; align-items: center;">
+                  <span style="color: var(--neon-green);">✔</span>
+                  <span>Установлены обновлённые обои и логотип KINETIX в главном меню выбора режимов</span>
+                </li>
+                <li style="display: flex; gap: 10px; align-items: center;">
+                  <span style="color: var(--neon-green);">✔</span>
+                  <span>Оптимизирован рендеринг ClickGUI, улучшен FPS на 30-40%</span>
+                </li>
+                <li style="display: flex; gap: 10px; align-items: center;">
+                  <span style="color: var(--neon-green);">✔</span>
+                  <span>Добавлен полноценный веб-личный кабинет с облачными конфигурациями</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 2: ЗАГРУЗКИ -->
+          <div class="dash-tab-pane" id="tab_downloads">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">📥</div>
+                  <h3>Файлы клиента для скачивания</h3>
+                </div>
+              </div>
+
+              <div class="downloads-grid">
+                <!-- Карточка 1: Jar -->
+                <div class="dl-card">
+                  <div>
+                    <div class="dl-card-top">
+                      <div class="dl-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                      </div>
+                      <div class="dl-meta">
+                        <h4>Kinetix-Client.jar</h4>
+                        <span class="dl-version-tag">Fabric 1.21.4 • v1.2</span>
+                      </div>
+                    </div>
+                    <p class="dl-desc">
+                      Основной mod-файл клиента. Поместите его в папку <code>.minecraft/mods</code> и запускайте игру через Fabric Loader.
+                    </p>
+                  </div>
+                  <a href="downloads/Kinetix-Client.jar" download="Kinetix-Client-1.21.4.jar" class="btn btn-primary btn-block btn-glow">
+                    <span>Скачать .jar (7.5 MB)</span>
+                  </a>
+                </div>
+
+                <!-- Карточка 2: Лоадер -->
+                <div class="dl-card">
+                  <div>
+                    <div class="dl-card-top">
+                      <div class="dl-icon purple">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                          <line x1="8" y1="21" x2="16" y2="21"></line>
+                          <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                      </div>
+                      <div class="dl-meta">
+                        <h4>Kinetix Launcher.exe</h4>
+                        <span class="dl-version-tag" style="color: var(--neon-purple); background: rgba(168,85,247,0.1);">Windows Auto-Installer</span>
+                      </div>
+                    </div>
+                    <p class="dl-desc">
+                      Умный установщик. Автоматически скачивает Fabric, настраивает библиотеки, оптимизирует JVM и внедряет софт.
+                    </p>
+                  </div>
+                  <button class="btn btn-secondary btn-block" onclick="showToast('Загрузка лаунчера начнётся через секунду...', '#a855f7')">
+                    <span>Скачать Launcher.exe</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Инструкция -->
+              <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 20px;">
+                <h4 style="margin-bottom: 12px; color: var(--neon-cyan);">Инструкция по установке за 1 минуту:</h4>
+                <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; color: var(--text-secondary); font-size: 0.92rem;">
+                  <li>Убедитесь, что у вас установлен <strong>Fabric Loader 0.16.x / 1.21.4</strong>.</li>
+                  <li>Скачайте файл <code>Kinetix-Client-1.21.4.jar</code> по кнопке выше.</li>
+                  <li>Нажмите комбинацию клавиш <kbd style="background: #222; padding: 2px 6px; border-radius: 4px;">Win + R</kbd>, введите <code>%appdata%\.minecraft\mods</code> и нажмите Enter.</li>
+                  <li>Переместите скачанный <code>.jar</code> файл в эту папку.</li>
+                  <li>Запустите Minecraft. Нажмите <kbd style="background: #222; padding: 2px 6px; border-radius: 4px;">RSHIFT</kbd> для открытия меню функций!</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 3: ЛИЦЕНЗИЯ И КЛЮЧИ -->
+          <div class="dash-tab-pane" id="tab_license">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">🔑</div>
+                  <h3>Активация лицензионного ключа</h3>
+                </div>
+              </div>
+
+              <div style="max-width: 600px; margin-bottom: 30px;">
+                <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 0.95rem;">
+                  Если вы приобрели ключ у менеджера, в боте Telegram или выиграли в конкурсе — введите его ниже для моментальной активации доступа:
+                </p>
+                <div style="display: flex; gap: 12px;">
+                  <input type="text" class="dash-input" id="licenseKeyInput" placeholder="KINETIX-XXXX-XXXX-XXXX" style="padding-left: 18px; font-family: var(--font-mono); text-transform: uppercase;">
+                  <button class="btn btn-primary btn-glow" id="activateKeyBtn" style="white-space: nowrap;">Активировать</button>
+                </div>
+              </div>
+
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">💳</div>
+                  <h3>Продление доступа</h3>
+                </div>
+              </div>
+
+              <div class="downloads-grid">
+                <div class="dl-card" style="padding: 20px;">
+                  <h4>1 День теста</h4>
+                  <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-cyan);">99 ₽</p>
+                  <a href="https://t.me/kinetixclient_bot" target="_blank" class="btn btn-sm btn-secondary">Купить в Telegram</a>
+                </div>
+                <div class="dl-card" style="padding: 20px;">
+                  <h4>7 Дней (Неделя)</h4>
+                  <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-cyan);">150 ₽</p>
+                  <a href="https://t.me/kinetixclient_bot" target="_blank" class="btn btn-sm btn-secondary">Купить в Telegram</a>
+                </div>
+                <div class="dl-card" style="padding: 20px;">
+                  <h4>30 Дней (Месяц)</h4>
+                  <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-cyan);">300 ₽</p>
+                  <a href="https://t.me/kinetixclient_bot" target="_blank" class="btn btn-sm btn-secondary">Купить в Telegram</a>
+                </div>
+                <div class="dl-card" style="padding: 20px; border-color: var(--border-glow);">
+                  <div style="color: var(--neon-cyan); font-weight: 800; font-size: 0.8rem; margin-bottom: 4px;">ХИТ ВЫБОРА</div>
+                  <h4>LIFETIME НАВСЕГДА</h4>
+                  <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-green);">800 ₽</p>
+                  <a href="https://t.me/kinetixclient_bot" target="_blank" class="btn btn-sm btn-primary btn-glow">Забрать навсегда</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 4: HWID -->
+          <div class="dash-tab-pane" id="tab_hwid">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">💻</div>
+                  <h3>Привязка компьютера (Hardware ID)</h3>
+                </div>
+              </div>
+
+              <p style="color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6;">
+                Ваша подписка привязывается к уникальному идентификатору оборудования (HWID) для защиты от передачи третьим лицам. Вы можете свободно сбрасывать HWID при замене комплектующих или переустановке Windows.
+              </p>
+
+              <div class="hwid-box">
+                <div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Текущий зарегистрированный HWID</div>
+                  <div class="hwid-val" id="hwidDisplay">B4F8-79C1-D8E2-4D02</div>
+                </div>
+                <button class="btn btn-secondary" id="resetHwidBtn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                  </svg>
+                  <span>Сбросить HWID</span>
+                </button>
+              </div>
+
+              <div style="color: var(--text-muted); font-size: 0.85rem;">
+                ℹ️ После нажатия кнопки "Сбросить HWID", запустите клиент на новом компьютере — новый HWID привяжется автоматически при первом входе.
+              </div>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 5: ОБЛАЧНЫЕ КОНФИГИ -->
+          <div class="dash-tab-pane" id="tab_configs">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">☁️</div>
+                  <h3>Облачные конфигурации (Cloud Configs)</h3>
+                </div>
+                <button class="btn btn-sm btn-primary" id="addConfigBtn">+ Загрузить свой конфиг</button>
+              </div>
+
+              <table class="configs-table">
+                <thead>
+                  <tr>
+                    <th>Название конфига</th>
+                    <th>Сервер / Режим</th>
+                    <th>Автор</th>
+                    <th>Cloud Код</th>
+                    <th style="text-align: right;">Действия</th>
+                  </tr>
+                </thead>
+                <tbody id="configsTableBody">
+                  <!-- Генерируется из JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 6: РЕФЕРАЛЫ -->
+          <div class="dash-tab-pane" id="tab_referrals">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">👥</div>
+                  <h3>Реферальная программа (Зарабатывай 20%)</h3>
+                </div>
+              </div>
+
+              <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Приглашайте друзей и получайте <strong>20% от каждой их покупки</strong> на свой баланс в кабинете. Средства можно выводить на банковские карты, СБП, ЮMoney или обменивать на подписку!
+              </p>
+
+              <div class="form-group" style="max-width: 600px;">
+                <label>Ваша уникальная реферальная ссылка</label>
+                <div style="display: flex; gap: 10px;">
+                  <input type="text" class="dash-input" id="refLinkInput" readonly style="padding-left: 16px; font-family: var(--font-mono); color: var(--neon-cyan);">
+                  <button class="btn btn-primary" id="copyRefBtn">Скопировать</button>
+                </div>
+              </div>
+
+              <div class="dash-stats-row" style="margin-top: 24px;">
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Приглашено пользователей</h4>
+                    <div class="dash-stat-val" id="statRefFriends" style="color: var(--neon-cyan);">5</div>
+                  </div>
+                </div>
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Заработано рублей</h4>
+                    <div class="dash-stat-val" id="statRefEarned" style="color: var(--neon-green);">750 ₽</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 7: НАСТРОЙКИ -->
+          <div class="dash-tab-pane" id="tab_settings">
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon">⚙️</div>
+                  <h3>Настройки профиля и скина</h3>
+                </div>
+              </div>
+
+              <div style="max-width: 500px;">
+                <div class="form-group">
+                  <label>Никнейм игрока (для аватарки и скина)</label>
+                  <input type="text" class="dash-input" id="profileMcNick" placeholder="Steve" style="padding-left: 16px;">
+                  <small style="color: var(--text-muted); display: block; margin-top: 6px;">
+                    Введите лицензионный никнейм Minecraft для автоматической загрузки скина
+                  </small>
+                </div>
+
+                <button class="btn btn-primary" id="saveProfileBtn">Сохранить изменения</button>
+              </div>
+
+              <!-- Блок управления правами администратора -->
+              <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-subtle); max-width: 540px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                  <span style="font-size: 1.3rem;">👑</span>
+                  <h4 style="font-size: 1.1rem; color: #ffd700;">Режим Администратора (Owner)</h4>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
+                  Включите режим администратора, чтобы получить доступ к панели генерации лицензионных ключей, управлению пользователями и финансовой статистике.
+                </p>
+                <button class="btn btn-primary btn-glow" id="toggleAdminBtn" style="background: linear-gradient(135deg, #ff3366, #ffd700); border-color: #ffd700; color: #000; font-weight: 800;">
+                  👑 Включить права Администратора
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ВКЛАДКА 8: АДМИН-ПАНЕЛЬ -->
+          <div class="dash-tab-pane" id="tab_admin">
+            <div class="dash-card" style="border-color: rgba(255, 215, 0, 0.4); background: linear-gradient(180deg, rgba(255, 51, 102, 0.08) 0%, rgba(16, 21, 34, 0.8) 100%);">
+              <div class="dash-card-header">
+                <div class="card-title-group">
+                  <div class="card-title-icon" style="background: rgba(255, 215, 0, 0.15); color: #ffd700;">👑</div>
+                  <div>
+                    <h3 style="color: #ffd700;">Панель Управления Создателя (Owner / Admin)</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">Полный контроль над клиентом, ключами и базой пользователей</p>
+                  </div>
+                </div>
+                <span class="admin-badge">⚡ ROOT ACCESS</span>
+              </div>
+
+              <!-- Верхняя статистика администратора -->
+              <div class="dash-stats-row" style="margin-bottom: 24px;">
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Всего пользователей</h4>
+                    <div class="dash-stat-val" style="color: var(--neon-cyan);">2,450</div>
+                  </div>
+                </div>
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Активных подписок</h4>
+                    <div class="dash-stat-val" style="color: var(--neon-green);">1,890</div>
+                  </div>
+                </div>
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Общая выручка</h4>
+                    <div class="dash-stat-val" style="color: #ffd700;">384,500 ₽</div>
+                  </div>
+                </div>
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Статус клиента</h4>
+                    <div class="dash-stat-val" style="color: var(--neon-green); font-size: 1.1rem;" id="adminClientStatus">UNDETECTED</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Генератор лицензионных ключей -->
+              <div class="admin-generator-box">
+                <h4 style="margin-bottom: 12px; color: #ffd700; display: flex; align-items: center; gap: 8px;">
+                  <span>🔑</span> Генератор лицензионных ключей
+                </h4>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">
+                  Сгенерируйте новые лицензионные ключи для выдачи покупателям или проведения розыгрышей:
+                </p>
+
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                  <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Тарифный план</label>
+                    <select class="admin-select" id="adminKeyPlan">
+                      <option value="LIFETIME">LIFETIME (Навсегда)</option>
+                      <option value="MONTH">30 Дней (Месяц)</option>
+                      <option value="WEEK">7 Дней (Неделя)</option>
+                      <option value="DAY">1 День (Тест)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Количество ключей</label>
+                    <select class="admin-select" id="adminKeyCount">
+                      <option value="1">1 ключ</option>
+                      <option value="5">5 ключей</option>
+                      <option value="10">10 ключей</option>
+                      <option value="25">25 ключей</option>
+                    </select>
+                  </div>
+
+                  <div style="align-self: flex-end;">
+                    <button class="btn btn-primary btn-glow" id="adminGenerateKeysBtn" style="background: linear-gradient(135deg, #ff3366, #ffd700); color: #000; font-weight: 800;">
+                      ⚡ Сгенерировать ключи
+                    </button>
+                  </div>
+                </div>
+
+                <div id="adminKeysResultBox" style="display: none; margin-top: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">Готовые ключи (нажмите кнопку, чтобы скопировать):</span>
+                    <button class="btn btn-sm btn-secondary" id="adminCopyAllKeysBtn">Скопировать все ключи</button>
+                  </div>
+                  <div class="keys-list-area" id="adminKeysOutput"></div>
+                </div>
+              </div>
+
+              <!-- Таблица управления пользователями -->
+              <div class="dash-card-header" style="margin-top: 20px;">
+                <div class="card-title-group">
+                  <div class="card-title-icon" style="background: rgba(0, 240, 255, 0.1);">👥</div>
+                  <h3>База пользователей и лицензий</h3>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="showToast('База данных синхронизирована', '#00ff88')">Синхронизировать</button>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Пользователь</th>
+                      <th>Тариф</th>
+                      <th>HWID</th>
+                      <th>Статус</th>
+                      <th style="text-align: right;">Действия администратора</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersTable">
+                    <!-- Заполняется динамически -->
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
