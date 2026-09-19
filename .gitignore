@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+backups/
+kinetix.db
+run_test.py
+audit_ids.py
