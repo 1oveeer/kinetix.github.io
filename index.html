@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KINETIX CLIENT — Приватный софт для Minecraft 1.21.x</title>
+  <meta name="description" content="Топовый приватный софт для Minecraft 1.21.x Fabric. Обходы GrimAC, Matrix, Vulcan. Высокий FPS, 120+ модулей, Cloud CFG.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Syne:wght@700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Canvas для анимированных неоновых кибер-частиц -->
+  <canvas id="cyberCanvas"></canvas>
+
+  <!-- Фоновые неоновые световые пятна (Glow Orbs) -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Навигация -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text" id="logoText">KINETIX</span>
+        <span class="logo-badge" id="logoBadge">v1.2</span>
+      </a>
+
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span class="status-title">STATUS:</span>
+        <span class="status-value" id="navStatus">UNDETECTED</span>
+      </div>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#clickgui">Интерфейс</a>
+        <!-- <a href="#features">Преимущества</a> -->
+        <!-- <a href="#modules">Модули</a> -->
+        <a href="#pricing">Тарифы</a>
+        <!-- <a href="#faq">FAQ</a> -->
+        <a href="dashboard.html" style="color: var(--neon-cyan); font-weight: 600;">Кабинет</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="dashboard.html" class="btn btn-secondary" id="navDashBtn" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="navDashText">Кабинет</span>
+        </a>
+        <a href="#" class="btn-community tg-btn" id="navTelegram" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          Telegram
+        </a>
+        <a href="#pricing" class="btn btn-primary btn-glow">Купить софт</a>
+        <button class="burger-btn" id="burgerBtn" aria-label="Меню">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero секция -->
+  <section class="hero-section">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-tag">
+          <span class="tag-sparkle">✦</span>
+          <span id="heroGameVersion">Minecraft 1.21.x / Fabric</span>
+          <span class="tag-divider">•</span>
+          <span class="tag-accent">Next-Gen Bypass</span>
+        </div>
+
+        <h1 class="hero-title">
+          ДОМИНИРУЙ С <br>
+          <span class="gradient-text neon-pulse" id="heroClientName">KINETIX</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Премиальный приватный софт с безупречными обходами актуальных античитов. Высокий FPS, более 120 настраиваемых модулей и готовые Cloud-конфиги для тотального превосходства на серверах.
+        </p>
+
+        <div class="hero-cta-group">
+          <a href="#pricing" class="btn btn-primary btn-xl btn-glow">
+            <span>Выбрать подписку</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <!-- <a href="#" class="btn btn-secondary btn-xl" id="heroDiscord" target="_blank" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+            </svg>
+            <span>Discord сообщество</span>
+          </a> -->
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-card">
+            <div class="stat-num" id="statUsers">2,450+</div>
+            <div class="stat-label">Игроков онлайн</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num neon-green" id="statBypasses">99.9%</div>
+            <div class="stat-label">Безопасность (Safe)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statModules">120+</div>
+            <div class="stat-label">Модулей в ClickGUI</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num neon-cyan" id="statFps">+35%</div>
+            <div class="stat-label">Оптимизация FPS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Презентация актуального меню чита Kinetix (ClickGUI Showcase) -->
+  <section class="section gui-showcase-section" id="clickgui">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-sub">ИНТЕРФЕЙС И МОДУЛИ</span>
+        <h2 class="section-title">ИНТЕРАКТИВНОЕ CLICKGUI МЕНЮ</h2>
+        <p class="section-desc">Оцените удобство управления, смену визуальных тем и реальный внутриигровой HUD чита Kinetix прямо сейчас.</p>
+      </div>
+
+      <div class="gui-showcase-wrapper">
+        <!-- Переключатель режимов презентации -->
+        <div class="preview-mode-bar">
+          <button class="preview-mode-btn active" data-view="clickgui">
+            <span class="btn-dot"></span>
+            <span>⚡ Актуальное ClickGUI</span>
+          </button>
+          <button class="preview-mode-btn" data-view="screenshot">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span>📸 Скриншот из игры (HUD)</span>
+          </button>
+          <button class="preview-mode-btn" data-view="mainmenu">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>🌌 Главное меню 3D</span>
+          </button>
+        </div>
+
+        <div class="preview-view active" id="viewClickGui">
+
+          <!-- Верхняя плашка выбора тем оформления (Theme Bar из Gui.java) -->
+          <div class="clickgui-theme-bar">
+            <div class="theme-bar-left">
+              <span class="theme-k-badge">K</span>
+              <span class="theme-title">Kinetix client</span>
+              <span class="theme-sep">/</span>
+              <span class="theme-sub">Themes</span>
+            </div>
+            <div class="theme-palette">
+              <button class="theme-dot active" data-color="#b829ea" data-glow="rgba(184, 41, 234, 0.45)" title="Neon Violet" style="--c: #b829ea;"></button>
+              <button class="theme-dot" data-color="#00f0ff" data-glow="rgba(0, 240, 255, 0.45)" title="Cyber Cyan" style="--c: #00f0ff;"></button>
+              <button class="theme-dot" data-color="#10b981" data-glow="rgba(16, 185, 129, 0.45)" title="Emerald Green" style="--c: #10b981;"></button>
+              <button class="theme-dot" data-color="#ff6b4a" data-glow="rgba(255, 107, 74, 0.45)" title="Sunset Coral" style="--c: #ff6b4a;"></button>
+              <button class="theme-dot" data-color="#f8fafc" data-glow="rgba(248, 250, 252, 0.35)" title="Monochrome White" style="--c: #f8fafc;"></button>
+            </div>
+          </div>
+
+          <!-- Главное окно ClickGUI чита -->
+          <div class="gui-window-wrapper">
+            <div class="gui-window actual-clickgui">
+              <div class="clickgui-layout">
+                <!-- Сайдбар чита: буква K в левом верхнем углу и аватарка в нижнем углу -->
+                <div class="clickgui-sidebar">
+                  <div class="sidebar-top">
+                    <!-- Буква K в левом верхнем углу меню чита -->
+                    <div class="sidebar-k-logo" title="Kinetix Client">K</div>
+                    <div class="sidebar-divider"></div>
+                    <!-- Иконки категорий (Combat, Move, Render, Player, World, Configs) -->
+                    <div class="sidebar-categories">
+                      <button class="cat-btn" data-category="all" title="Все функции (106 функций)">
+                        <span class="cat-icon">⭐</span>
+                        <span class="cat-label">All</span>
+                      </button>
+                      <button class="cat-btn active" data-category="combat" title="Combat (Бой • 19)">
+                        <span class="cat-icon">⚔️</span>
+                        <span class="cat-label">Combat</span>
+                      </button>
+                      <button class="cat-btn" data-category="movement" title="Movement (Движение • 18)">
+                        <span class="cat-icon">⚡</span>
+                        <span class="cat-label">Move</span>
+                      </button>
+                      <button class="cat-btn" data-category="render" title="Render (Визуалы / ESP • 25)">
+                        <span class="cat-icon">👁️</span>
+                        <span class="cat-label">Render</span>
+                      </button>
+                      <button class="cat-btn" data-category="player" title="Player (Игрок • 14)">
+                        <span class="cat-icon">🛡️</span>
+                        <span class="cat-label">Player</span>
+                      </button>
+                      <button class="cat-btn" data-category="world" title="World & Util (Мир и Утилиты • 25)">
+                        <span class="cat-icon">🌐</span>
+                        <span class="cat-label">World</span>
+                      </button>
+                      <button class="cat-btn" data-category="configs" title="Configs (Конфиги • 5)">
+                        <span class="cat-icon">⚙️</span>
+                        <span class="cat-label">Configs</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Аватарка в левом нижнем углу меню (актуальный арт Kinetix) -->
+                  <div class="sidebar-bottom">
+                    <div class="clickgui-avatar-box" title="Профиль: btw1o (Владелец Kinetix)">
+                      <img src="images/avatar.png" alt="Kinetix Avatar" class="clickgui-avatar-img">
+                      <span class="avatar-online-dot"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Основная рабочая область меню -->
+                <div class="clickgui-main">
+                  <!-- Верхняя полоса навигации и поиска -->
+                  <div class="clickgui-header">
+                    <div class="header-breadcrumb">
+                      <span class="breadcrumb-k">K</span>
+                      <span class="breadcrumb-client">Kinetix client</span>
+                      <span class="breadcrumb-arrow">›</span>
+                      <span class="breadcrumb-cat" id="guiActiveCatTitle">Combat</span>
+                    </div>
+
+                    <div class="header-search">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input type="text" id="guiSearchInput" placeholder="Поиск модулей..." autocomplete="off">
+                    </div>
+                  </div>
+
+                  <!-- Двухколоночный грид модулей чита -->
+                  <div class="clickgui-modules-container" id="clickguiModulesGrid">
+                    <!-- Заполняется скриптом из актуальной базы модулей -->
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div class="gui-glow-shadow" id="guiGlowShadow"></div>
+          </div>
+        </div>
+
+        <!-- 2. Просмотр реального скриншота из игры (HUD + Водяной знак + ESP) -->
+        <div class="preview-view" id="viewScreenshot" style="display: none;">
+          <div class="screenshot-card">
+            <div class="screenshot-header">
+              <div class="sh-left">
+                <span class="sh-badge-live">● LIVE SCREENSHOT</span>
+                <span class="sh-title">Minecraft 1.21.4 (Fabric) — Kinetix Client HUD</span>
+              </div>
+              <a href="images/hud_preview.png" target="_blank" class="btn-open-full">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                В полном размере
+              </a>
+            </div>
+            <div class="screenshot-img-box">
+              <img src="images/hud_preview.png" alt="Kinetix Client In-game HUD" class="real-mc-screenshot">
+              <div class="screenshot-pin pin-watermark">
+                <div class="pin-dot"></div>
+                <div class="pin-popup">Новый логотип K и водяной знак Kinetix client</div>
+              </div>
+              <div class="screenshot-pin pin-potions">
+                <div class="pin-dot"></div>
+                <div class="pin-popup">Статус активных зелий и эффектов</div>
+              </div>
+              <div class="screenshot-pin pin-esp">
+                <div class="pin-dot"></div>
+                <div class="pin-popup">ESP подсветка предметов и трассеры</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Просмотр 3D Главного меню чита -->
+        <div class="preview-view" id="viewMainMenu" style="display: none;">
+          <div class="screenshot-card">
+            <div class="screenshot-header">
+              <div class="sh-left">
+                <span class="sh-badge-menu">★ 3D NEON DESIGN</span>
+                <span class="sh-title">Фирменное главное меню и экран AltManager Kinetix</span>
+              </div>
+              <a href="images/banner.png" target="_blank" class="btn-open-full">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                В полном размере
+              </a>
+            </div>
+            <div class="screenshot-img-box">
+              <img src="images/banner.png" alt="Kinetix Client 3D Main Menu" class="real-mc-screenshot">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Секция преимуществ (сохранена в коде, но скрыта по запросу) -->
+  <section class="section" id="features" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-sub">ПРЕИМУЩЕСТВА</span>
+        <h2 class="section-title">ПОЧЕМУ ВЫБИРАЮТ НАШ СОФТ</h2>
+        <p class="section-desc">Максимальный упор на скрытность, стабильность и непревзойденное удобство настройки.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-box cyan">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3>Актуальные обходы (Grim & Matrix)</h3>
+          <p>Постоянный реверс-инжиниринг античитов. Модули работают без киков, флагов и теневых детектов на топ проектах.</p>
+          <div class="card-glow"></div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box purple">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h3>Прирост FPS & Zero Lag</h3>
+          <p>Собственный многопоточный рендер без просадок кадров даже во время массивных замесов на спавне и анархии.</p>
+          <div class="card-glow"></div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box green">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <h3>Мгновенный запуск и авто-обновления</h3>
+          <p>Вам не нужно мучаться со сложной установкой. Запуск в один клик, автоматическая подгрузка свежих фиксов.</p>
+          <div class="card-glow"></div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box pink">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+            </svg>
+          </div>
+          <h3>Облачные конфигурации (Cloud CFG)</h3>
+          <p>Загружайте готовые идеальные конфиги от топ-игроков под популярные сервера в один клик прямо из меню чита.</p>
+          <div class="card-glow"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- Секция модулей чита (сохранена в коде, но скрыта от отображения) -->
+  <section class="section modules-section" id="modules" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-sub">ФУНКЦИОНАЛ</span>
+        <h2 class="section-title">АРСЕНАЛ ИЗ 120+ МОДУЛЕЙ</h2>
+        <p class="section-desc">Гибкая система настроек под любой стиль игры: от легитного PvP до жесткого рейдж-режима.</p>
+      </div>
+
+      <!-- Фильтр категорий -->
+      <div class="module-filter-bar">
+        <button class="filter-btn active" data-category="all">Все модули</button>
+        <button class="filter-btn" data-category="combat">⚔️ Combat</button>
+        <button class="filter-btn" data-category="movement">⚡ Movement</button>
+        <button class="filter-btn" data-category="render">👁️ Visuals</button>
+        <button class="filter-btn" data-category="player">🛡️ Player</button>
+        <button class="filter-btn" data-category="world">🌐 World</button>
+      </div>
+
+      <!-- Грид модулей (заполняется динамически из config.js) -->
+      <div class="modules-grid" id="modulesGrid"></div>
+    </div>
+  </section>
+
+  <!-- Секция тарифов -->
+  <section class="section pricing-section" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-sub">ТАРИФНЫЕ ПЛАНЫ</span>
+        <h2 class="section-title">ВЫБЕРИТЕ ВАШУ ПОДПИСКУ</h2>
+        <p class="section-desc">Моментальная выдача ключа сразу после подтверждения оплаты.</p>
+      </div>
+
+      <div class="pricing-grid" id="pricingGrid">
+        <!-- Карточки тарифов генерируются через config.js -->
+      </div>
+
+      <!-- Способы оплаты баннер -->
+      <div class="payment-methods-banner">
+        <span class="methods-title">Принимаем к оплате:</span>
+        <div class="methods-list">
+          <span class="pay-chip">Банковские карты (МИР, Visa, Mastercard)</span>
+          <span class="pay-chip">СБП (0% комиссии)</span>
+          <span class="pay-chip">ЮMoney</span>
+          <span class="pay-chip">Криптовалюта (USDT, TON, BTC)</span>
+          <span class="pay-chip">Telegram Pay</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ секция (сохранена в коде, но скрыта от отображения) -->
+  <section class="section faq-section" id="faq" style="display: none;">
+    <div class="container faq-container">
+      <div class="section-header">
+        <span class="badge-sub">FAQ</span>
+        <h2 class="section-title">ЧАСТО ЗАДАВАЕМЫЕ ВОПРОСЫ</h2>
+        <p class="section-desc">Ответы на самые популярные вопросы по установке, функционалу и безопасности.</p>
+      </div>
+
+      <div class="faq-list" id="faqList">
+        <!-- Аккордеон FAQ генерируется через config.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA финальный блок (сохранен в коде, но скрыт по запросу) -->
+  <section class="cta-banner-section" style="display: none;">
+    <div class="container">
+      <div class="cta-banner">
+        <div class="cta-content">
+          <h2>ГОТОВ ПЕРЕЙТИ НА НОВЫЙ УРОВЕНЬ?</h2>
+          <p>Присоединяйся к тысячам довольных игроков прямо сейчас и забирай лучший клиент с гарантией качества.</p>
+          <div class="cta-buttons">
+            <a href="#pricing" class="btn btn-primary btn-xl btn-glow">Купить софт прямо сейчас</a>
+            <a href="https://t.me/kinetixclient_bot" class="btn btn-secondary btn-xl" id="ctaTgBtn" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+              <span>Telegram бот</span>
+            </a>
+          </div>
+        </div>
+        <div class="cta-graphic">
+          <div class="energy-circle"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Подвал сайта -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-col brand-col">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text" id="footerLogoText">KINETIX</span>
+        </div>
+        <p class="footer-desc">
+          Высокотехнологичный игровой клиент с передовыми алгоритмами обходов и абсолютной оптимизацией для Fabric 1.21.x.
+        </p>
+        <div class="footer-status">
+          <span class="status-dot"></span> Система работает в штатном режиме
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Навигация</h4>
+        <ul class="footer-links">
+          <li><a href="dashboard.html" style="color: var(--neon-cyan); font-weight: 600;">Личный кабинет</a></li>
+          <li><a href="#features">Преимущества</a></li>
+          <!-- <li><a href="#modules">Каталог модулей</a></li> -->
+          <li><a href="#pricing">Тарифные планы</a></li>
+          <!-- <li><a href="#faq">Ответы на вопросы</a></li> -->
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Сообщество</h4>
+        <ul class="footer-links">
+          <li><a href="#" id="footerTgChannel" target="_blank" rel="noopener">Telegram Канал</a></li>
+          <li><a href="#" id="footerTgSupport" target="_blank" rel="noopener">Техническая поддержка</a></li>
+          <li><a href="#" id="footerDiscord" target="_blank" rel="noopener">Discord Сервер</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col disclaimer-col">
+        <h4>Информация</h4>
+        <p class="disclaimer-text">
+          Все права на Minecraft принадлежат Mojang Studios / Microsoft. Наш софт является независимой модификацией.
+        </p>
+        <div class="copyright">
+          © 2026 <span id="footerClientName">KINETIX</span>. Все права защищены.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Модальное окно покупки (Purchase Modal) -->
+  <div class="modal-overlay" id="purchaseModal">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" aria-label="Закрыть">✕</button>
+
+      <div class="modal-header">
+        <div class="modal-badge" id="modalPlanBadge">Тариф</div>
+        <h3 class="modal-title" id="modalPlanName">Оформление подписки</h3>
+        <div class="modal-price-tag">
+          К оплате: <span class="modal-price" id="modalPlanPrice">499 ₽</span>
+        </div>
+        <div class="modal-user-pill" style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 20px; padding: 4px 12px; font-size: 0.82rem; color: #a1a1aa;">
+          <span>Покупатель:</span> <strong id="modalUserName" style="color: var(--neon-cyan);">—</strong>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-instructions">
+          Выберите удобный способ связи для мгновенного получения ключа и инструкции:
+        </p>
+
+        <div class="payment-options">
+          <a href="#" class="pay-option tg-option" id="modalPayTg" target="_blank" rel="noopener">
+            <div class="pay-option-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+            </div>
+            <div class="pay-option-text">
+              <strong>Купить через Telegram</strong>
+              <span>Бот или менеджер (СБП, Карты, ЮMoney, Крипта)</span>
+            </div>
+            <span class="pay-arrow">→</span>
+          </a>
+
+          <a href="#" class="pay-option ds-option" id="modalPayDs" target="_blank" rel="noopener">
+            <div class="pay-option-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028z"/>
+              </svg>
+            </div>
+            <div class="pay-option-text">
+              <strong>Купить через Discord</strong>
+              <span>Создать тикет в канале #tickets</span>
+            </div>
+            <span class="pay-arrow">→</span>
+          </a>
+        </div>
+
+        <div class="modal-footer-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Выдача лицензионного ключа происходит автоматически сразу после проверки транзакции.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрипты -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
