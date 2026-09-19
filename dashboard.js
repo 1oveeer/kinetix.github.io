@@ -111,12 +111,6 @@ function loadUserSession() {
     }
   }
 
-  // Если сессия не сохранена, автоматически авторизуем пользователя 4234234 (PRO LIFETIME)
-  if (!currentUser) {
-    currentUser = JSON.parse(JSON.stringify(USER_4234234));
-    saveUserSession();
-  }
-
   // Проверка никнейма на права админа
   checkAdminStatus();
   updateAppView();
@@ -233,29 +227,6 @@ function initAuthEvents() {
     });
   }
 
-  const quickLogin4234234 = document.getElementById("quickLogin4234234");
-  const quickLoginBtw1o = document.getElementById("quickLoginBtw1o");
-
-  if (quickLogin4234234) {
-    quickLogin4234234.addEventListener("click", () => {
-      currentUser = JSON.parse(JSON.stringify(USER_4234234));
-      checkAdminStatus();
-      saveUserSession();
-      updateAppView();
-      showToast("Вход выполнен как 4234234 (PRO LIFETIME)!", "#00ff88");
-    });
-  }
-
-  if (quickLoginBtw1o) {
-    quickLoginBtw1o.addEventListener("click", () => {
-      currentUser = JSON.parse(JSON.stringify(DEFAULT_USER));
-      checkAdminStatus();
-      saveUserSession();
-      updateAppView();
-      showToast("Вход выполнен как btw1o (Владелец)!", "#ffd700");
-    });
-  }
-
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -264,16 +235,19 @@ function initAuthEvents() {
       const username = usernameInput ? usernameInput.value.trim() : "";
       const password = passwordInput ? passwordInput.value.trim() : "";
 
-      // Если логин пустой или 4234234 — моментально входим как 4234234
-      if (!username || username === "4234234") {
-        currentUser = JSON.parse(JSON.stringify(USER_4234234));
-        checkAdminStatus();
-        saveUserSession();
-        updateAppView();
-        showToast("Добро пожаловать в Kinetix, 4234234!", "#00ff88");
+      if (!username) {
+        showToast("Пожалуйста, введите логин!", "#f43f5e");
+        highlightLoginError(usernameInput, null);
         return;
       }
 
+      if (!password) {
+        showToast("Пожалуйста, введите пароль!", "#f43f5e");
+        highlightLoginError(null, passwordInput);
+        return;
+      }
+
+      // Вход владельца btw1o
       if (username.toLowerCase() === "btw1o") {
         currentUser = JSON.parse(JSON.stringify(DEFAULT_USER));
         checkAdminStatus();
@@ -287,7 +261,7 @@ function initAuthEvents() {
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ login: username, password: password || "1234" })
+          body: JSON.stringify({ login: username, password: password })
         });
         const data = await res.json();
         if (data.success && data.user) {
@@ -300,43 +274,20 @@ function initAuthEvents() {
           showToast(`Добро пожаловать, ${currentUser.username}!`, "#00ff88");
           return;
         } else {
-          // Если сервер вернул ошибку, но это известный профиль
-          if (username === "4234234") {
-            currentUser = JSON.parse(JSON.stringify(USER_4234234));
-            checkAdminStatus();
-            saveUserSession();
-            updateAppView();
-            showToast(`Добро пожаловать, 4234234!`, "#00ff88");
-            return;
-          }
           showToast(data.error || "Неверный логин или пароль!", "#f43f5e");
           highlightLoginError(usernameInput, passwordInput);
           return;
         }
       } catch (err) {
-        // Если сервер оффлайн — проверяем встроенные профили
-        if (username === "4234234") {
-          currentUser = JSON.parse(JSON.stringify(USER_4234234));
-          checkAdminStatus();
-          saveUserSession();
-          updateAppView();
-          showToast("Добро пожаловать, 4234234!", "#00ff88");
-          return;
-        }
-
-        if (username.toLowerCase() === "btw1o") {
-          currentUser = JSON.parse(JSON.stringify(DEFAULT_USER));
-          checkAdminStatus();
-          saveUserSession();
-          updateAppView();
-          showToast("Вход выполнен (Владелец)", "#ffd700");
-          return;
-        }
-
         // Проверяем, был ли аккаунт зарегистрирован локально
         const accounts = getStoredAccounts();
         const existing = accounts[username.toLowerCase()];
         if (existing) {
+          if (existing.password && existing.password !== password) {
+            showToast("Неверный пароль!", "#f43f5e");
+            highlightLoginError(null, passwordInput);
+            return;
+          }
           currentUser = Object.assign({}, existing);
           delete currentUser.password;
           checkAdminStatus();
@@ -346,29 +297,8 @@ function initAuthEvents() {
           return;
         }
 
-        // Если новый пользователь — автоматически создаем и пускаем
-        currentUser = {
-          id: Date.now(),
-          username: username,
-          email: `${username}@kinetix.lol`,
-          role: "PRO LIFETIME",
-          isLifetime: true,
-          is_lifetime: 1,
-          is_active: true,
-          sub_status: "active",
-          sub_tier: "LIFETIME",
-          sub_expires: "Бессрочно",
-          planName: "KINETIX LIFETIME",
-          hwid: "HWID-KNTX-" + Math.floor(1000 + Math.random() * 9000),
-          hwidLocked: true,
-          balance: 150,
-          referrals: 0,
-          refEarnings: 0,
-          avatar: "https://minotar.net/avatar/steve/128"
-        };
-        saveUserSession();
-        updateAppView();
-        showToast(`Добро пожаловать, ${username}!`, "#00ff88");
+        showToast("Аккаунт не найден! Пожалуйста, зарегистрируйтесь во вкладке «Регистрация».", "#f43f5e");
+        highlightLoginError(usernameInput, null);
       }
     });
   }
@@ -445,9 +375,9 @@ function initAuthEvents() {
           daysLeft: isLifetime ? "Навсегда" : (isKeyGiven ? "30 дн." : "0 дн."),
           planName: isLifetime ? "KINETIX LIFETIME" : (isKeyGiven ? "KINETIX PREMIUM (30 Дней)" : "Подписка не активирована"),
           plan_name: isLifetime ? "KINETIX LIFETIME" : (isKeyGiven ? "KINETIX PREMIUM (30 Дней)" : "Подписка не активирована"),
-          expiryDate: isLifetime ? "Бессрочно" : (isKeyGiven ? new Date(Date.now() + 30 * 86400000).toLocaleDateString("ru-RU") : "—"),
-          hwid: "HWID-KNTX-" + Math.floor(1000 + Math.random() * 9000),
-          hwid_resets: 1,
+          hwid: isKeyGiven ? ("HWID-KNTX-" + Math.floor(1000 + Math.random() * 9000)) : "",
+          balance: 0,
+          hwid_resets: isKeyGiven ? 1 : 0,
           discord_id: null,
           created_at: new Date().toLocaleDateString("ru-RU")
         };
