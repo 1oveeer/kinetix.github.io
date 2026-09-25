@@ -9,7 +9,9 @@ const CONFIG = {
   clientBadge: "RELEASE v1.2",
   gameVersion: "Minecraft 1.21.11 / Fabric",
   statusText: "UNDETECTED",
-  statusColor: "#00ff88", // зеленый
+  // Облачная база данных Supabase (PostgreSQL 24/7)
+  supabaseUrl: "https://dnoxciyqvitnjipgxxje.supabase.co",
+  supabaseKey: "sb_publishable_CE6L0c5QJNMVwI4-VByz9Q_n9_p3yqE",
   
   // Социальные сети и контакты
   telegramBot: "https://t.me/kinetixclient_bot", // Ссылка на вашего Telegram бота оплаты

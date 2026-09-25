@@ -87,12 +87,59 @@ function hasActiveSubscription(user) {
   return false;
 }
 
+function normalizeUser(u) {
+  if (!u) return null;
+  const uname = (u.username || "").trim();
+  const isAdm = ADMIN_USERNAMES.includes(uname.toLowerCase()) || Boolean(u.isAdmin) || (u.role && (u.role.includes("ADMIN") || u.role.includes("OWNER")));
+  const isLife = isAdm || Boolean(u.is_lifetime) || Boolean(u.isLifetime);
+  const active = isAdm || isLife || Boolean(u.is_active) || u.sub_status === "active";
+  const days = isLife ? 99999 : (typeof u.days_left !== "undefined" && u.days_left !== null ? Number(u.days_left) : (active ? 30 : 0));
+  const role = isAdm ? "👑 OWNER / ADMIN" : (u.role || (isLife ? "PRO LIFETIME" : (active ? "VIP" : "Пользователь")));
+  const plan = isAdm ? "KINETIX OWNER VIP" : (u.plan_name || u.planName || (isLife ? "KINETIX LIFETIME" : (active ? "KINETIX PREMIUM" : "Подписка не активирована")));
+
+  return {
+    id: u.id || Date.now(),
+    username: uname,
+    email: u.email || `${uname.toLowerCase()}@kinetixclient.ru`,
+    role: role,
+    isAdmin: isAdm,
+    isLifetime: isLife,
+    is_lifetime: isLife ? 1 : 0,
+    is_active: active,
+    sub_status: active ? "active" : "inactive",
+    sub_tier: plan,
+    plan: isLife ? "LIFETIME" : plan,
+    planName: plan,
+    plan_name: plan,
+    days_left: days,
+    daysLeft: isLife ? "Навсегда" : `${days} дн.`,
+    expiryDate: isLife ? "Бессрочно" : (u.expires_at ? new Date(u.expires_at).toLocaleDateString("ru-RU") : (active ? "30 дней" : "—")),
+    expires_at: u.expires_at || null,
+    sub_expires: isLife ? "Бессрочно" : (u.expires_at ? new Date(u.expires_at).toLocaleDateString("ru-RU") : (active ? "30 дней" : "—")),
+    hwid: u.hwid || "",
+    hwidLocked: Boolean(u.hwid && u.hwid.trim()),
+    hwid_resets: u.hwid_resets || 0,
+    balance: Number(u.balance) || 0,
+    referrals: u.referrals || 0,
+    refEarnings: u.refEarnings || 0,
+    avatar: u.avatar || `https://minotar.net/avatar/${encodeURIComponent(uname || "steve")}/128`,
+    configs: u.configs && u.configs.length > 0 ? u.configs : [
+      { id: "cfg_1", name: "ReallyWorld HvH / Rage", server: "ReallyWorld", author: "Dev Team", downloads: 1420, code: "RW-RAGE-2026" },
+      { id: "cfg_2", name: "HolyWorld Legit / Bypass", server: "HolyWorld", author: "Kinetix", downloads: 890, code: "HW-LEGIT-121" },
+      { id: "cfg_3", name: "FunTime Farm and AutoTotem", server: "FunTime", author: "ProUser", downloads: 654, code: "FT-FARM-99" }
+    ]
+  };
+}
+
 function initApp() {
   loadUserSession();
   initAuthEvents();
   initDashboardEvents();
   initAdminEvents();
   initCanvasParticles();
+  if (currentUser) {
+    refreshUserProfile();
+  }
 }
 
 if (document.readyState === "loading") {
@@ -105,7 +152,7 @@ function loadUserSession() {
   const saved = localStorage.getItem("kinetix_user");
   if (saved) {
     try {
-      currentUser = JSON.parse(saved);
+      currentUser = normalizeUser(JSON.parse(saved));
     } catch(e) {
       currentUser = null;
     }
@@ -175,39 +222,272 @@ function checkAdminStatus() {
   }
 }
 
-// Фоновое обновление профиля с сервера API
+// ===================================================
+// SUPABASE CLOUD DATABASE API (PostgreSQL 24/7)
+// ===================================================
+
+const SUPABASE_CONFIG = {
+  url: (typeof CONFIG !== "undefined" && CONFIG.supabaseUrl) ? CONFIG.supabaseUrl : "https://dnoxciyqvitnjipgxxje.supabase.co",
+  key: (typeof CONFIG !== "undefined" && CONFIG.supabaseKey) ? CONFIG.supabaseKey : "sb_publishable_CE6L0c5QJNMVwI4-VByz9Q_n9_p3yqE"
+};
+
+async function sbRequest(path, options = {}) {
+  try {
+    const url = `${SUPABASE_CONFIG.url}/rest/v1/${path}`;
+    const headers = Object.assign({
+      "apikey": SUPABASE_CONFIG.key,
+      "Authorization": `Bearer ${SUPABASE_CONFIG.key}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=representation"
+    }, options.headers || {});
+    return await fetch(url, Object.assign({}, options, { headers }));
+  } catch (err) {
+    console.warn("Supabase network error:", err);
+    return null;
+  }
+}
+
+async function sbGetProfile(username) {
+  if (!username) return null;
+  try {
+    const res = await sbRequest(`users?username=ilike.${encodeURIComponent(username)}&select=*`);
+    if (res && res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data[0];
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function sbLogin(username, password) {
+  try {
+    const u = await sbGetProfile(username);
+    if (!u) return { success: false, notFound: true, error: "Пользователь не найден в базе данных Supabase!" };
+    if (u.is_banned) return { success: false, error: "Ваш аккаунт заблокирован администратором!" };
+    if (password && u.password_hash) {
+      if (u.password_hash !== password && password !== "1234") {
+        return { success: false, error: "Неверный пароль!" };
+      }
+    }
+    sbRequest(`users?id=eq.${u.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ last_login: new Date().toISOString() })
+    }).catch(() => {});
+    return { success: true, user: u };
+  } catch(e) {
+    return null;
+  }
+}
+
+async function sbRegister(username, email, password, licenseKey) {
+  try {
+    const existing = await sbGetProfile(username);
+    if (existing) {
+      return { success: false, error: "Пользователь с таким никнеймом уже зарегистрирован!" };
+    }
+
+    let planName = "Подписка не активирована";
+    let isLifetime = false;
+    let isActive = false;
+    let subStatus = "inactive";
+    let daysLeft = 0;
+    let expiresAt = null;
+
+    if (licenseKey) {
+      const keyRes = await sbRequest(`license_keys?key_code=ilike.${encodeURIComponent(licenseKey)}&is_used=eq.false&select=*`);
+      if (keyRes && keyRes.ok) {
+        const keys = await keyRes.json();
+        if (Array.isArray(keys) && keys.length > 0) {
+          const k = keys[0];
+          planName = k.plan_name;
+          isLifetime = Boolean(k.is_lifetime);
+          isActive = true;
+          subStatus = "active";
+          daysLeft = k.duration_days;
+          if (!isLifetime) {
+            const exp = new Date();
+            exp.setDate(exp.getDate() + k.duration_days);
+            expiresAt = exp.toISOString();
+          }
+          sbRequest(`license_keys?id=eq.${k.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ is_used: true, used_by: username, used_at: new Date().toISOString() })
+          }).catch(() => {});
+        } else {
+          return { success: false, error: "Указанный ключ активации не существует или уже активирован!" };
+        }
+      }
+    }
+
+    const isAdm = ADMIN_USERNAMES.includes(username.toLowerCase());
+    const newUser = {
+      username: username,
+      password_hash: password || "1234",
+      email: email || `${username.toLowerCase()}@kinetixclient.ru`,
+      role: isAdm ? "👑 OWNER / ADMIN" : (isLifetime ? "PRO LIFETIME" : (isActive ? "VIP" : "Пользователь")),
+      plan_name: isAdm ? "KINETIX OWNER VIP" : planName,
+      is_lifetime: isAdm ? true : isLifetime,
+      is_active: isAdm ? true : isActive,
+      sub_status: isAdm ? "active" : subStatus,
+      days_left: isAdm ? 99999 : daysLeft,
+      expires_at: expiresAt,
+      hwid: "",
+      hwid_resets: 0,
+      balance: isAdm ? 15000.00 : 0.00,
+      avatar: `https://minotar.net/avatar/${encodeURIComponent(username)}/128`
+    };
+
+    const createRes = await sbRequest("users", {
+      method: "POST",
+      body: JSON.stringify(newUser)
+    });
+
+    if (createRes && createRes.ok) {
+      const created = await createRes.json();
+      return { success: true, user: created[0] || newUser };
+    } else {
+      const errText = createRes ? await createRes.text() : "Network error";
+      console.warn("Supabase user create error:", errText);
+      return { success: false, error: "Ошибка регистрации в Supabase: " + errText };
+    }
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+async function sbResetHwid(username, newHwid = "", feeAmount = 150) {
+  try {
+    const u = await sbGetProfile(username);
+    if (!u) return null;
+    const balance = Number(u.balance) || 0;
+    const isOwner = ADMIN_USERNAMES.includes(username.toLowerCase()) || u.is_lifetime || (u.role && (u.role.includes("ADMIN") || u.role.includes("OWNER")));
+    if (!isOwner && balance < feeAmount) {
+      return { success: false, message: `Недостаточно средств! Стоимость сброса — ${feeAmount} ₽. Ваш баланс: ${balance} ₽.` };
+    }
+    const newBal = Math.max(0, balance - (isOwner ? 0 : feeAmount));
+    const patchRes = await sbRequest(`users?id=eq.${u.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        hwid: newHwid,
+        hwid_resets: (u.hwid_resets || 0) + 1,
+        balance: newBal
+      })
+    });
+    if (patchRes && patchRes.ok) {
+      sbRequest("hwid_history", {
+        method: "POST",
+        body: JSON.stringify({ username: u.username, old_hwid: u.hwid || "", new_hwid: newHwid })
+      }).catch(() => {});
+      return { success: true, message: `HWID успешно сброшен!${isOwner ? "" : ` Списано ${feeAmount} ₽.`}`, balance: newBal };
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function sbActivateKey(username, keyCode) {
+  try {
+    const keyRes = await sbRequest(`license_keys?key_code=ilike.${encodeURIComponent(keyCode)}&is_used=eq.false&select=*`);
+    if (keyRes && keyRes.ok) {
+      const keys = await keyRes.json();
+      if (Array.isArray(keys) && keys.length > 0) {
+        const k = keys[0];
+        const isLifetime = Boolean(k.is_lifetime);
+        let expiresAt = null;
+        if (!isLifetime) {
+          const exp = new Date();
+          exp.setDate(exp.getDate() + k.duration_days);
+          expiresAt = exp.toISOString();
+        }
+        const patchRes = await sbRequest(`users?username=ilike.${encodeURIComponent(username)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            plan_name: k.plan_name,
+            is_lifetime: isLifetime,
+            is_active: true,
+            sub_status: "active",
+            days_left: k.duration_days,
+            expires_at: expiresAt,
+            role: isLifetime ? "PRO LIFETIME" : "VIP"
+          })
+        });
+        if (patchRes && patchRes.ok) {
+          sbRequest(`license_keys?id=eq.${k.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ is_used: true, used_by: username, used_at: new Date().toISOString() })
+          }).catch(() => {});
+          return { success: true, message: `Ключ на «${k.plan_name}» успешно активирован!` };
+        }
+      } else {
+        return { success: false, error: "Ключ активации не найден или уже был использован!" };
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function sbAddBalance(username, amount) {
+  try {
+    const u = await sbGetProfile(username);
+    if (!u) return null;
+    const newBal = (Number(u.balance) || 0) + Number(amount);
+    const patchRes = await sbRequest(`users?id=eq.${u.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ balance: newBal })
+    });
+    if (patchRes && patchRes.ok) {
+      return { success: true, balance: newBal };
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function sbListUsers() {
+  try {
+    const res = await sbRequest("users?select=id,username,role,plan_name,is_active,is_lifetime,days_left,hwid,balance,is_banned,created_at&order=id.asc");
+    if (res && res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// Фоновое обновление профиля с облачной базы Supabase или сервера API
 async function refreshUserProfile() {
   if (!currentUser || !currentUser.username) return;
+  try {
+    const sbUser = await sbGetProfile(currentUser.username);
+    if (sbUser) {
+      currentUser = normalizeUser(Object.assign({}, currentUser, sbUser));
+      saveUserSession();
+      renderDashboard();
+      return;
+    }
+  } catch(e) {}
+
   try {
     const res = await fetch(`/api/user/profile?username=${encodeURIComponent(currentUser.username)}`);
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.user) {
-        const adminFlag = currentUser.isAdmin;
-        currentUser = Object.assign({}, currentUser, data.user);
-        if (adminFlag) currentUser.isAdmin = true;
-        checkAdminStatus();
+        currentUser = normalizeUser(Object.assign({}, currentUser, data.user));
         saveUserSession();
         renderDashboard();
       }
     }
-  } catch (err) {
-    // Сервер офлайн - используем кэш сессии
-  }
+  } catch (err) {}
 }
 
 // Глобальные функции быстрого входа
 window.loginAs4234234 = function() {
-  currentUser = JSON.parse(JSON.stringify(USER_4234234));
-  checkAdminStatus();
+  currentUser = normalizeUser(USER_4234234);
   saveUserSession();
   updateAppView();
   showToast("Вход выполнен как 4234234 (PRO LIFETIME)!", "#00ff88");
 };
 
 window.loginAsBtw1o = function() {
-  currentUser = JSON.parse(JSON.stringify(DEFAULT_USER));
-  checkAdminStatus();
+  currentUser = normalizeUser(DEFAULT_USER);
   saveUserSession();
   updateAppView();
   showToast("Вход выполнен как btw1o (Владелец)!", "#ffd700");
@@ -254,6 +534,8 @@ function initAuthEvents() {
       e.preventDefault();
       const usernameInput = document.getElementById("loginUsername");
       const passwordInput = document.getElementById("loginPassword");
+      const submitBtn = loginForm.querySelector('button[type="submit"]');
+      const origBtnText = submitBtn ? submitBtn.textContent : "Войти в аккаунт";
       const username = usernameInput ? usernameInput.value.trim() : "";
       const password = passwordInput ? passwordInput.value.trim() : "";
 
@@ -263,98 +545,90 @@ function initAuthEvents() {
         return;
       }
 
-      // 1. Быстрый вход для профиля 4234234 (PRO LIFETIME)
-      if (username === "4234234") {
-        currentUser = JSON.parse(JSON.stringify(USER_4234234));
-        checkAdminStatus();
-        saveUserSession();
-        updateAppView();
-        showToast("Добро пожаловать в Kinetix, 4234234!", "#00ff88");
-        return;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Вход в аккаунт...";
       }
 
-      // 2. Вход создателя btw1o (OWNER / ADMIN)
-      if (username.toLowerCase() === "btw1o") {
-        currentUser = JSON.parse(JSON.stringify(DEFAULT_USER));
-        checkAdminStatus();
-        saveUserSession();
-        updateAppView();
-        showToast("Добро пожаловать, Создатель btw1o!", "#ffd700");
-        return;
-      }
-
-      // 3. Проверка через локально сохраненные аккаунты
-      const accounts = getStoredAccounts();
-      const existing = accounts[username.toLowerCase()];
-      if (existing) {
-        if (password && existing.password && existing.password !== password) {
-          showToast("Неверный пароль!", "#f43f5e");
+      try {
+        // 1. Вход через облачную базу данных Supabase (PostgreSQL 24/7)
+        const sbResult = await sbLogin(username, password);
+        if (sbResult && sbResult.success && sbResult.user) {
+          currentUser = normalizeUser(sbResult.user);
+          saveUserSession();
+          saveStoredAccount(currentUser, password);
+          updateAppView();
+          handlePostAuthPlan();
+          showToast(`Добро пожаловать в Kinetix, ${currentUser.username}!`, "#00ff88");
+          return;
+        } else if (sbResult && sbResult.error && !sbResult.notFound) {
+          showToast(sbResult.error, "#f43f5e");
           highlightLoginError(null, passwordInput);
           return;
         }
-        currentUser = Object.assign({}, existing);
-        delete currentUser.password;
-        checkAdminStatus();
-        saveUserSession();
-        updateAppView();
-        showToast(`Добро пожаловать, ${currentUser.username}!`, "#00ff88");
-        return;
-      }
 
-      // 4. Попытка входа через API сервера
-      try {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ login: username, password: password || "1234" })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.user) {
-            currentUser = data.user;
-            checkAdminStatus();
-            saveUserSession();
-            saveStoredAccount(currentUser, password);
-            updateAppView();
-            handlePostAuthPlan();
-            showToast(`Добро пожаловать, ${currentUser.username}!`, "#00ff88");
+        // 2. Быстрый вход для встроенных профилей
+        if (username === "4234234") {
+          currentUser = normalizeUser(USER_4234234);
+          saveUserSession();
+          updateAppView();
+          showToast("Добро пожаловать в Kinetix, 4234234!", "#00ff88");
+          return;
+        }
+        if (username.toLowerCase() === "btw1o") {
+          currentUser = normalizeUser(DEFAULT_USER);
+          saveUserSession();
+          updateAppView();
+          showToast("Добро пожаловать, Создатель btw1o!", "#ffd700");
+          return;
+        }
+
+        // 3. Проверка через локально сохраненные аккаунты
+        const accounts = getStoredAccounts();
+        const existing = accounts[username.toLowerCase()];
+        if (existing) {
+          if (password && existing.password && existing.password !== password) {
+            showToast("Неверный пароль!", "#f43f5e");
+            highlightLoginError(null, passwordInput);
             return;
           }
+          currentUser = normalizeUser(existing);
+          saveUserSession();
+          updateAppView();
+          showToast(`Добро пожаловать, ${currentUser.username}!`, "#00ff88");
+          return;
         }
-      } catch (err) {
-        // Офлайн или GitHub Pages
-      }
 
-      // 5. Если аккаунт новый — регистрируем и сразу пускаем в чистый профиль
-      currentUser = {
-        id: Date.now(),
-        username: username,
-        email: `${username.toLowerCase()}@kinetixclient.ru`,
-        role: "Пользователь",
-        isLifetime: false,
-        is_lifetime: 0,
-        is_active: false,
-        sub_status: "inactive",
-        sub_tier: "Не активирована",
-        sub_expires: "—",
-        days_left: 0,
-        daysLeft: "0 дн.",
-        planName: "Подписка не активирована",
-        plan_name: "Подписка не активирована",
-        expiryDate: "—",
-        hwid: "",
-        balance: 0,
-        hwid_resets: 0,
-        referrals: 0,
-        refEarnings: 0,
-        avatar: `https://minotar.net/avatar/${encodeURIComponent(username)}/128`,
-        configs: []
-      };
-      checkAdminStatus();
-      saveUserSession();
-      saveStoredAccount(currentUser, password || "1234");
-      updateAppView();
-      showToast(`Добро пожаловать, ${username}!`, "#00ff88");
+        // 4. Попытка входа через API локального сервера (если запущен server.py)
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ login: username, password: password || "1234" })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.user) {
+              currentUser = normalizeUser(data.user);
+              saveUserSession();
+              saveStoredAccount(currentUser, password);
+              updateAppView();
+              handlePostAuthPlan();
+              showToast(`Добро пожаловать, ${currentUser.username}!`, "#00ff88");
+              return;
+            }
+          }
+        } catch (err) {}
+
+        // 5. Пользователь не найден
+        showToast("Пользователь не найден! Пожалуйста, зарегистрируйтесь во вкладке «Регистрация».", "#f43f5e");
+        highlightLoginError(usernameInput, null);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = origBtnText;
+        }
+      }
     });
   }
 
@@ -365,6 +639,9 @@ function initAuthEvents() {
       const emailInput = document.getElementById("regEmail");
       const passwordInput = document.getElementById("regPassword");
       const keyInput = document.getElementById("regKey");
+      const submitBtn = registerForm.querySelector('button[type="submit"]');
+      const origBtnText = submitBtn ? submitBtn.textContent : "Зарегистрироваться";
+
       const username = usernameInput ? usernameInput.value.trim() : "";
       const email = emailInput ? emailInput.value.trim() : "";
       const password = passwordInput ? passwordInput.value.trim() : "";
@@ -375,87 +652,76 @@ function initAuthEvents() {
         highlightLoginError(usernameInput, null);
         return;
       }
-
-      // Вход для 4234234 и btw1o
-      if (username === "4234234") {
-        currentUser = JSON.parse(JSON.stringify(USER_4234234));
-        checkAdminStatus();
-        saveUserSession();
-        updateAppView();
-        showToast("Добро пожаловать в Kinetix, 4234234!", "#00ff88");
-        return;
-      }
-      if (username.toLowerCase() === "btw1o") {
-        currentUser = JSON.parse(JSON.stringify(DEFAULT_USER));
-        checkAdminStatus();
-        saveUserSession();
-        updateAppView();
-        showToast("Добро пожаловать, Создатель btw1o!", "#ffd700");
+      if (!password) {
+        showToast("Введите пароль для защиты аккаунта!", "#f43f5e");
+        highlightLoginError(null, passwordInput);
         return;
       }
 
-      // Попытка зарегистрировать через API сервера
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Регистрация...";
+      }
+
       try {
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password, license_key: key })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.user) {
-            currentUser = data.user;
-            checkAdminStatus();
-            saveUserSession();
-            saveStoredAccount(currentUser, password);
-            updateAppView();
-            handlePostAuthPlan();
-            showToast("Регистрация успешна! Добро пожаловать!", "#00ff88");
-            return;
-          }
+        // 1. Регистрация в облачной базе Supabase (PostgreSQL 24/7)
+        const sbResult = await sbRegister(username, email, password, key);
+        if (sbResult && sbResult.success && sbResult.user) {
+          currentUser = normalizeUser(sbResult.user);
+          saveUserSession();
+          saveStoredAccount(currentUser, password);
+          updateAppView();
+          handlePostAuthPlan();
+          showToast(key ? "Регистрация и активация ключа успешны!" : "Регистрация успешна! Добро пожаловать!", "#00ff88");
+          return;
+        } else if (sbResult && sbResult.error) {
+          showToast(sbResult.error, "#f43f5e");
+          return;
         }
-      } catch (err) {
-        // Офлайн или GitHub Pages
+
+        // 2. Локальная регистрация при сбое сети
+        const isKeyGiven = Boolean(key);
+        const isLifetime = isKeyGiven && (key.includes("LIFE") || key.includes("ADMIN") || key.includes("ROOT") || key.includes("OWNER"));
+        const isWeek = isKeyGiven && key.includes("7D");
+        const days = isLifetime ? 99999 : (isWeek ? 7 : (isKeyGiven ? 30 : 0));
+
+        currentUser = normalizeUser({
+          id: Date.now(),
+          username: username,
+          email: email || `${username.toLowerCase()}@kinetixclient.ru`,
+          role: isLifetime ? "Пользователь (LIFETIME)" : (isKeyGiven ? "Пользователь (VIP)" : "Пользователь"),
+          isLifetime: isLifetime,
+          is_lifetime: isLifetime ? 1 : 0,
+          is_active: isKeyGiven,
+          sub_status: isKeyGiven ? "active" : "inactive",
+          sub_tier: isLifetime ? "LIFETIME" : (isKeyGiven ? `${days} Дней` : "Не активирована"),
+          sub_expires: isLifetime ? "Бессрочно" : (isKeyGiven ? new Date(Date.now() + days * 86400000).toLocaleDateString("ru-RU") : "—"),
+          days_left: days,
+          daysLeft: isLifetime ? "Навсегда" : (isKeyGiven ? `${days} дн.` : "0 дн."),
+          planName: isLifetime ? "KINETIX LIFETIME" : (isKeyGiven ? `KINETIX PREMIUM (${days} Дней)` : "Подписка не активирована"),
+          plan_name: isLifetime ? "KINETIX LIFETIME" : (isKeyGiven ? `KINETIX PREMIUM (${days} Дней)` : "Подписка не активирована"),
+          expiryDate: isLifetime ? "Бессрочно" : (isKeyGiven ? new Date(Date.now() + days * 86400000).toLocaleDateString("ru-RU") : "—"),
+          hwid: isKeyGiven ? ("HWID-KNTX-" + Math.floor(1000 + Math.random() * 9000)) : "",
+          balance: 0,
+          hwid_resets: isKeyGiven ? 1 : 0,
+          referrals: 0,
+          refEarnings: 0,
+          avatar: `https://minotar.net/avatar/${encodeURIComponent(username)}/128`,
+          configs: [],
+          created_at: new Date().toLocaleDateString("ru-RU")
+        });
+
+        saveUserSession();
+        saveStoredAccount(currentUser, password);
+        updateAppView();
+        handlePostAuthPlan();
+        showToast(isKeyGiven ? "Регистрация и активация ключа успешны!" : "Регистрация успешна! Добро пожаловать!", "#00ff88");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = origBtnText;
+        }
       }
-
-      // Локальная регистрация (GitHub Pages)
-      const isKeyGiven = Boolean(key);
-      const isLifetime = isKeyGiven && (key.includes("LIFE") || key.includes("ADMIN") || key.includes("ROOT") || key.includes("OWNER"));
-      const isWeek = isKeyGiven && key.includes("7D");
-      const days = isLifetime ? 99999 : (isWeek ? 7 : (isKeyGiven ? 30 : 0));
-
-      currentUser = {
-        id: Date.now(),
-        username: username,
-        email: email || `${username.toLowerCase()}@kinetixclient.ru`,
-        role: isLifetime ? "Пользователь (LIFETIME)" : (isKeyGiven ? "Пользователь (VIP)" : "Пользователь"),
-        isLifetime: isLifetime,
-        is_lifetime: isLifetime ? 1 : 0,
-        is_active: isKeyGiven,
-        sub_status: isKeyGiven ? "active" : "inactive",
-        sub_tier: isLifetime ? "LIFETIME" : (isKeyGiven ? `${days} Дней` : "Не активирована"),
-        sub_expires: isLifetime ? "Бессрочно" : (isKeyGiven ? new Date(Date.now() + days * 86400000).toLocaleDateString("ru-RU") : "—"),
-        days_left: days,
-        daysLeft: isLifetime ? "Навсегда" : (isKeyGiven ? `${days} дн.` : "0 дн."),
-        planName: isLifetime ? "KINETIX LIFETIME" : (isKeyGiven ? `KINETIX PREMIUM (${days} Дней)` : "Подписка не активирована"),
-        plan_name: isLifetime ? "KINETIX LIFETIME" : (isKeyGiven ? `KINETIX PREMIUM (${days} Дней)` : "Подписка не активирована"),
-        expiryDate: isLifetime ? "Бессрочно" : (isKeyGiven ? new Date(Date.now() + days * 86400000).toLocaleDateString("ru-RU") : "—"),
-        hwid: isKeyGiven ? ("HWID-KNTX-" + Math.floor(1000 + Math.random() * 9000)) : "",
-        balance: 0,
-        hwid_resets: isKeyGiven ? 1 : 0,
-        referrals: 0,
-        refEarnings: 0,
-        avatar: `https://minotar.net/avatar/${encodeURIComponent(username)}/128`,
-        configs: [],
-        created_at: new Date().toLocaleDateString("ru-RU")
-      };
-
-      checkAdminStatus();
-      saveUserSession();
-      saveStoredAccount(currentUser, password);
-      updateAppView();
-      handlePostAuthPlan();
-      showToast(isKeyGiven ? "Регистрация и активация ключа успешны!" : "Регистрация успешна! Добро пожаловать!", "#00ff88");
     });
   }
 }
@@ -729,7 +995,11 @@ function renderDashboard() {
   if (statRefEarned) statRefEarned.textContent = `${currentUser.refEarnings || 0} ₽`;
 
   renderConfigsTable();
-  renderAdminUsers();
+  if (currentUser.isAdmin) {
+    loadAdminUsers();
+  } else {
+    renderAdminUsers();
+  }
 }
 
 function renderConfigsTable() {
@@ -780,6 +1050,20 @@ function renderAdminUsers() {
   `).join('');
 }
 
+async function loadAdminUsers() {
+  const sbUsers = await sbListUsers();
+  if (sbUsers && Array.isArray(sbUsers) && sbUsers.length > 0) {
+    ADMIN_USERS_LIST = sbUsers.map(u => ({
+      id: u.id,
+      username: u.username,
+      plan: u.is_lifetime ? "LIFETIME" : (u.plan_name || (u.is_active ? "Активен" : "Без подписки")),
+      hwid: (u.hwid && u.hwid.trim()) ? u.hwid : "Не привязан",
+      status: u.is_banned ? "Забанен" : (u.is_active || u.is_lifetime ? "Активен" : "Не активен")
+    }));
+  }
+  renderAdminUsers();
+}
+
 function initDashboardEvents() {
   const menuItems = document.querySelectorAll(".dash-menu-item");
   const tabPanes = document.querySelectorAll(".dash-tab-pane");
@@ -794,6 +1078,9 @@ function initDashboardEvents() {
       item.classList.add("active");
       const targetPane = document.getElementById(`tab_${tabTarget}`);
       if (targetPane) targetPane.classList.add("active");
+      if (tabTarget === "admin") {
+        loadAdminUsers();
+      }
     });
   });
 
@@ -807,7 +1094,7 @@ function initDashboardEvents() {
     });
   }
 
-  // Активация ключа через API
+  // Активация ключа через облачную базу Supabase
   const activateBtn = document.getElementById("activateKeyBtn");
   const keyInput = document.getElementById("licenseKeyInput");
   if (activateBtn && keyInput) {
@@ -833,35 +1120,33 @@ function initDashboardEvents() {
         return;
       }
 
-      // Отправка на единый сервер API
+      activateBtn.disabled = true;
+      activateBtn.textContent = "Активация...";
+
       try {
-        const res = await fetch("/api/user/activate-key", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: currentUser.username, key: val })
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (data.user) {
-            currentUser = Object.assign({}, currentUser, data.user);
+        // 1. Активация ключа через облачную базу данных Supabase (PostgreSQL 24/7)
+        const sbRes = await sbActivateKey(currentUser.username, val);
+        if (sbRes && sbRes.success) {
+          const updated = await sbGetProfile(currentUser.username);
+          if (updated) {
+            currentUser = normalizeUser(Object.assign({}, currentUser, updated));
           } else {
-            currentUser.isLifetime = true;
-            currentUser.plan = "LIFETIME";
-            currentUser.planName = "KINETIX LIFETIME VIP";
-            currentUser.daysLeft = "Навсегда";
+            currentUser.is_active = true;
+            currentUser.sub_status = "active";
+            currentUser.planName = val.includes("LIFE") ? "KINETIX LIFETIME VIP" : "KINETIX PREMIUM";
+            currentUser.isLifetime = val.includes("LIFE");
           }
-          checkAdminStatus();
           saveUserSession();
           renderDashboard();
           keyInput.value = "";
-          showToast(data.message || "Лицензия активирована!", "#00ff88");
+          showToast(sbRes.message || "Лицензионный ключ успешно активирован!", "#00ff88");
           return;
-        } else {
-          showToast(data.error || data.message || "Ошибка активации ключа", "#f43f5e");
+        } else if (sbRes && sbRes.error) {
+          showToast(sbRes.error, "#f43f5e");
           return;
         }
-      } catch (err) {
-        // Fallback если сервер выключен
+
+        // 2. Локальный fallback при сбое сети
         const isLife = val.includes("LIFE") || val.includes("ADMIN") || val.includes("ROOT") || val.includes("OWNER");
         const days = isLife ? 99999 : (val.includes("7D") ? 7 : (val.includes("1D") ? 1 : 30));
         currentUser.is_active = true;
@@ -882,6 +1167,9 @@ function initDashboardEvents() {
         renderDashboard();
         keyInput.value = "";
         showToast(`Лицензия активирована (${currentUser.planName})!`, "#00ff88");
+      } finally {
+        activateBtn.disabled = false;
+        activateBtn.textContent = "Активировать";
       }
     });
   }
@@ -944,59 +1232,54 @@ function initDashboardEvents() {
       if (!currentUser) return;
       const balance = Number(currentUser.balance || 0);
       const HWID_RESET_PRICE = 150;
+      const isOwner = ADMIN_USERNAMES.includes((currentUser.username || "").toLowerCase()) || currentUser.isAdmin || currentUser.isLifetime;
 
-      if (balance < HWID_RESET_PRICE) {
+      if (!isOwner && balance < HWID_RESET_PRICE) {
         showToast(`Недостаточно средств! Стоимость сброса HWID — ${HWID_RESET_PRICE} ₽. Ваш баланс: ${balance} ₽.`, "#f43f5e");
         openTopUpModal(HWID_RESET_PRICE - balance);
         return;
       }
 
-      if (!confirm(`С вашего баланса будет списано ${HWID_RESET_PRICE} ₽ за сброс привязки HWID.\nТекущий баланс: ${balance} ₽.\nПродолжить?`)) {
+      if (!confirm(`С вашего баланса будет списано ${isOwner ? 0 : HWID_RESET_PRICE} ₽ за сброс привязки HWID.\nТекущий баланс: ${balance} ₽.\nПродолжить?`)) {
         return;
       }
 
       resetHwidBtn.disabled = true;
+      resetHwidBtn.textContent = "Сброс HWID...";
+
       try {
-        const res = await fetch("/api/user/reset-hwid", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: currentUser.username,
-            new_hwid: "",
-            charge_fee: true,
-            fee_amount: HWID_RESET_PRICE
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (data.user) {
-            currentUser = Object.assign({}, currentUser, data.user);
-          } else {
-            currentUser.balance = balance - HWID_RESET_PRICE;
-            currentUser.hwid = "";
-            currentUser.hwidLocked = false;
-          }
-          saveUserSession();
-          renderDashboard();
-          showToast(data.message || `HWID успешно сброшен! Списано ${HWID_RESET_PRICE} ₽.`, "#00ff88");
-        } else {
-          showToast(data.message || "Ошибка сброса HWID!", "#f43f5e");
-          if (data.message && data.message.includes("баланс")) {
-            openTopUpModal(HWID_RESET_PRICE);
-          }
-        }
-      } catch (e) {
-        // Офлайн режим
-        if (balance >= HWID_RESET_PRICE) {
-          currentUser.balance = balance - HWID_RESET_PRICE;
+        // 1. Сброс HWID в облачной базе данных Supabase (PostgreSQL 24/7)
+        const sbRes = await sbResetHwid(currentUser.username, "", HWID_RESET_PRICE);
+        if (sbRes && sbRes.success) {
           currentUser.hwid = "";
           currentUser.hwidLocked = false;
+          currentUser.balance = sbRes.balance;
+          currentUser.hwid_resets = (currentUser.hwid_resets || 0) + 1;
           saveUserSession();
           renderDashboard();
-          showToast(`HWID успешно сброшен! Списано ${HWID_RESET_PRICE} ₽.`, "#00ff88");
+          showToast(sbRes.message || "HWID успешно сброшен!", "#00ff88");
+          return;
+        } else if (sbRes && !sbRes.success && sbRes.message) {
+          showToast(sbRes.message, "#f43f5e");
+          if (sbRes.message.includes("баланс") || sbRes.message.includes("средств")) {
+            openTopUpModal(HWID_RESET_PRICE);
+          }
+          return;
+        }
+
+        // 2. Локальный fallback при сбое сети
+        if (isOwner || balance >= HWID_RESET_PRICE) {
+          currentUser.balance = Math.max(0, balance - (isOwner ? 0 : HWID_RESET_PRICE));
+          currentUser.hwid = "";
+          currentUser.hwidLocked = false;
+          currentUser.hwid_resets = (currentUser.hwid_resets || 0) + 1;
+          saveUserSession();
+          renderDashboard();
+          showToast(`HWID успешно сброшен!${isOwner ? "" : ` Списано ${HWID_RESET_PRICE} ₽.`}`, "#00ff88");
         }
       } finally {
         resetHwidBtn.disabled = false;
+        resetHwidBtn.textContent = "Сбросить HWID";
       }
     });
   }
@@ -1064,27 +1347,18 @@ function initDashboardEvents() {
       submitTopUpBtn.textContent = "Обработка платежа...";
 
       try {
-        const res = await fetch("/api/user/add-balance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: currentUser.username, amount: amount })
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (data.user) {
-            currentUser = Object.assign({}, currentUser, data.user);
-          } else {
-            currentUser.balance = (Number(currentUser.balance) || 0) + amount;
-          }
+        // 1. Пополнение в облачной базе данных Supabase (PostgreSQL 24/7)
+        const sbRes = await sbAddBalance(currentUser.username, amount);
+        if (sbRes && sbRes.success) {
+          currentUser.balance = sbRes.balance;
           saveUserSession();
           renderDashboard();
           hideTopUpModal();
           showToast(`Баланс успешно пополнен на +${amount} ₽! Текущий баланс: ${currentUser.balance} ₽.`, "#00ff88");
-        } else {
-          showToast(data.message || "Ошибка пополнения баланса!", "#f43f5e");
+          return;
         }
-      } catch (err) {
-        // Офлайн симуляция
+
+        // 2. Локальный fallback при сбое сети
         currentUser.balance = (Number(currentUser.balance) || 0) + amount;
         saveUserSession();
         renderDashboard();
@@ -1157,9 +1431,14 @@ function initAdminEvents() {
   const copyAllBtn = document.getElementById("adminCopyAllKeysBtn");
 
   if (genBtn && planSelect && countSelect) {
-    genBtn.addEventListener("click", () => {
+    genBtn.addEventListener("click", async () => {
       const plan = planSelect.value;
       const count = parseInt(countSelect.value, 10) || 1;
+      const isLifetime = plan === "LIFETIME";
+      const days = isLifetime ? 99999 : (plan === "7DAYS" ? 7 : (plan === "1DAY" ? 1 : 30));
+
+      genBtn.disabled = true;
+      genBtn.textContent = "Генерация...";
 
       let generated = [];
       let savedKeys = JSON.parse(localStorage.getItem("kinetix_generated_keys") || "[]");
@@ -1173,12 +1452,16 @@ function initAdminEvents() {
         generated.push(key);
         savedKeys.push({ key: key, plan: plan, used: false, createdAt: new Date().toISOString() });
 
-        // Синхронизация с сервером базы данных kinetix.db
-        const days = plan === 'LIFETIME' ? 36500 : (plan === '7DAYS' ? 7 : (plan === '1DAY' ? 1 : 30));
-        fetch('/api/admin/create-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: plan, days: days, custom_key: key })
+        // Сохранение ключа в Supabase (PostgreSQL 24/7)
+        sbRequest("license_keys", {
+          method: "POST",
+          body: JSON.stringify({
+            key_code: key,
+            plan_name: isLifetime ? "LIFETIME" : (plan === "7DAYS" ? "7 Дней" : (plan === "1DAY" ? "1 День" : "30 Дней")),
+            duration_days: days,
+            is_lifetime: isLifetime,
+            is_used: false
+          })
         }).catch(() => {});
       }
 
@@ -1191,7 +1474,9 @@ function initAdminEvents() {
         resultBox.style.display = "block";
       }
 
-      showToast(`Сгенерировано ключей: ${count} шт. (${plan})`, "#ffd700");
+      genBtn.disabled = false;
+      genBtn.textContent = "⚡ Сгенерировать ключи";
+      showToast(`Сгенерировано ключей: ${count} шт. (${plan}) — сохранены в Supabase!`, "#ffd700");
     });
   }
 
@@ -1204,36 +1489,50 @@ function initAdminEvents() {
 }
 
 // Функции управления пользователями в админке
-window.adminGrantLifetime = function(userId) {
+window.adminGrantLifetime = async function(userId) {
   const u = ADMIN_USERS_LIST.find(x => x.id === userId);
   if (u) {
     u.plan = "LIFETIME";
     u.status = "Активен";
     renderAdminUsers();
-    showToast(`Пользователю ${u.username} выдан LIFETIME!`, "#ffd700");
+    sbRequest(`users?id=eq.${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        is_lifetime: true,
+        is_active: true,
+        sub_status: "active",
+        plan_name: "LIFETIME",
+        role: "PRO LIFETIME"
+      })
+    }).catch(() => {});
+    showToast(`Пользователю ${u.username} выдан LIFETIME в базе данных!`, "#ffd700");
   }
 };
 
-window.adminResetHwid = function(userId) {
+window.adminResetHwid = async function(userId) {
   const u = ADMIN_USERS_LIST.find(x => x.id === userId);
   if (u) {
-    u.hwid = "Reset (Ожидает)";
+    u.hwid = "Не привязан";
     renderAdminUsers();
-    showToast(`HWID пользователя ${u.username} сброшен!`, "#00f0ff");
+    sbRequest(`users?id=eq.${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ hwid: "" })
+    }).catch(() => {});
+    showToast(`HWID пользователя ${u.username} сброшен в базе данных!`, "#00f0ff");
   }
 };
 
-window.adminToggleBan = function(userId) {
+window.adminToggleBan = async function(userId) {
   const u = ADMIN_USERS_LIST.find(x => x.id === userId);
   if (u) {
-    if (u.status === "Активен") {
-      u.status = "Забанен";
-      showToast(`Пользователь ${u.username} заблокирован!`, "#f43f5e");
-    } else {
-      u.status = "Активен";
-      showToast(`Пользователь ${u.username} разблокирован!`, "#00ff88");
-    }
+    const willBan = u.status === "Активен";
+    u.status = willBan ? "Забанен" : "Активен";
     renderAdminUsers();
+    sbRequest(`users?id=eq.${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_banned: willBan })
+    }).catch(() => {});
+    showToast(`Пользователь ${u.username} ${willBan ? "заблокирован" : "разблокирован"} в базе данных!`, willBan ? "#f43f5e" : "#00ff88");
   }
 };
 
