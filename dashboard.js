@@ -355,22 +355,15 @@ async function sbRegister(username, email, password, licenseKey) {
   }
 }
 
-async function sbResetHwid(username, newHwid = "", feeAmount = 150) {
+async function sbResetHwid(username, newHwid = "") {
   try {
     const u = await sbGetProfile(username);
     if (!u) return null;
-    const balance = Number(u.balance) || 0;
-    const isOwner = ADMIN_USERNAMES.includes(username.toLowerCase()) || u.is_lifetime || (u.role && (u.role.includes("ADMIN") || u.role.includes("OWNER")));
-    if (!isOwner && balance < feeAmount) {
-      return { success: false, message: `Недостаточно средств! Стоимость сброса — ${feeAmount} ₽. Ваш баланс: ${balance} ₽.` };
-    }
-    const newBal = Math.max(0, balance - (isOwner ? 0 : feeAmount));
     const patchRes = await sbRequest(`users?id=eq.${u.id}`, {
       method: "PATCH",
       body: JSON.stringify({
         hwid: newHwid,
-        hwid_resets: (u.hwid_resets || 0) + 1,
-        balance: newBal
+        hwid_resets: (u.hwid_resets || 0) + 1
       })
     });
     if (patchRes && patchRes.ok) {
@@ -378,7 +371,7 @@ async function sbResetHwid(username, newHwid = "", feeAmount = 150) {
         method: "POST",
         body: JSON.stringify({ username: u.username, old_hwid: u.hwid || "", new_hwid: newHwid })
       }).catch(() => {});
-      return { success: true, message: `HWID успешно сброшен!${isOwner ? "" : ` Списано ${feeAmount} ₽.`}`, balance: newBal };
+      return { success: true, message: "HWID успешно сброшен!" };
     }
   } catch(e) {}
   return null;
@@ -884,7 +877,6 @@ function renderDashboard() {
   const statSubDays = document.getElementById("statSubDays");
   const statHwidStatus = document.getElementById("statHwidStatus");
   const statConfigsCount = document.getElementById("statConfigsCount");
-  const statBalance = document.getElementById("statBalance");
 
   if (statSubDays) {
     if (isLifetime) {
@@ -902,10 +894,6 @@ function renderDashboard() {
 
   if (statHwidStatus) statHwidStatus.textContent = (currentUser.hwidLocked || (currentUser.hwid && currentUser.hwid.trim())) ? "Привязан" : "Не привязан";
   if (statConfigsCount) statConfigsCount.textContent = currentUser.configs ? currentUser.configs.length : 0;
-  if (statBalance) statBalance.textContent = `${currentUser.balance || 0} ₽`;
-
-  const hwidTabBalance = document.getElementById("hwidTabBalance");
-  if (hwidTabBalance) hwidTabBalance.textContent = `${currentUser.balance || 0} ₽`;
 
   const hwidDisplay = document.getElementById("hwidDisplay");
   if (hwidDisplay) {
@@ -1230,17 +1218,8 @@ function initDashboardEvents() {
   if (resetHwidBtn) {
     resetHwidBtn.addEventListener("click", async () => {
       if (!currentUser) return;
-      const balance = Number(currentUser.balance || 0);
-      const HWID_RESET_PRICE = 150;
-      const isOwner = ADMIN_USERNAMES.includes((currentUser.username || "").toLowerCase()) || currentUser.isAdmin || currentUser.isLifetime;
 
-      if (!isOwner && balance < HWID_RESET_PRICE) {
-        showToast(`Недостаточно средств! Стоимость сброса HWID — ${HWID_RESET_PRICE} ₽. Ваш баланс: ${balance} ₽.`, "#f43f5e");
-        openTopUpModal(HWID_RESET_PRICE - balance);
-        return;
-      }
-
-      if (!confirm(`С вашего баланса будет списано ${isOwner ? 0 : HWID_RESET_PRICE} ₽ за сброс привязки HWID.\nТекущий баланс: ${balance} ₽.\nПродолжить?`)) {
+      if (!confirm("Вы действительно хотите сбросить привязку оборудования (HWID)?\nПри следующем входе в лаунчер привяжется ваш текущий компьютер.")) {
         return;
       }
 
@@ -1249,124 +1228,30 @@ function initDashboardEvents() {
 
       try {
         // 1. Сброс HWID в облачной базе данных Supabase (PostgreSQL 24/7)
-        const sbRes = await sbResetHwid(currentUser.username, "", HWID_RESET_PRICE);
+        const sbRes = await sbResetHwid(currentUser.username, "");
         if (sbRes && sbRes.success) {
           currentUser.hwid = "";
           currentUser.hwidLocked = false;
-          currentUser.balance = sbRes.balance;
           currentUser.hwid_resets = (currentUser.hwid_resets || 0) + 1;
           saveUserSession();
           renderDashboard();
-          showToast(sbRes.message || "HWID успешно сброшен!", "#00ff88");
+          showToast("HWID успешно сброшен!", "#00ff88");
           return;
         } else if (sbRes && !sbRes.success && sbRes.message) {
           showToast(sbRes.message, "#f43f5e");
-          if (sbRes.message.includes("баланс") || sbRes.message.includes("средств")) {
-            openTopUpModal(HWID_RESET_PRICE);
-          }
           return;
         }
 
         // 2. Локальный fallback при сбое сети
-        if (isOwner || balance >= HWID_RESET_PRICE) {
-          currentUser.balance = Math.max(0, balance - (isOwner ? 0 : HWID_RESET_PRICE));
-          currentUser.hwid = "";
-          currentUser.hwidLocked = false;
-          currentUser.hwid_resets = (currentUser.hwid_resets || 0) + 1;
-          saveUserSession();
-          renderDashboard();
-          showToast(`HWID успешно сброшен!${isOwner ? "" : ` Списано ${HWID_RESET_PRICE} ₽.`}`, "#00ff88");
-        }
+        currentUser.hwid = "";
+        currentUser.hwidLocked = false;
+        currentUser.hwid_resets = (currentUser.hwid_resets || 0) + 1;
+        saveUserSession();
+        renderDashboard();
+        showToast("HWID успешно сброшен!", "#00ff88");
       } finally {
         resetHwidBtn.disabled = false;
         resetHwidBtn.textContent = "Сбросить HWID";
-      }
-    });
-  }
-
-  // Логика пополнения баланса
-  const topUpModal = document.getElementById("topUpModal");
-  const closeTopUpModal = document.getElementById("closeTopUpModal");
-  const topUpBalanceBtn = document.getElementById("topUpBalanceBtn");
-  const hwidTopUpBtn = document.getElementById("hwidTopUpBtn");
-  const topUpAmountInput = document.getElementById("topUpAmountInput");
-  const submitTopUpBtn = document.getElementById("submitTopUpBtn");
-  const presetAmtBtns = document.querySelectorAll(".preset-amt-btn");
-
-  function openTopUpModal(suggestedAmount) {
-    if (topUpModal) {
-      topUpModal.style.display = "flex";
-      if (topUpAmountInput) {
-        if (suggestedAmount && suggestedAmount > 0) {
-          topUpAmountInput.value = Math.max(150, Math.ceil(suggestedAmount / 50) * 50);
-        } else {
-          topUpAmountInput.value = "150";
-        }
-        topUpAmountInput.focus();
-      }
-    }
-  }
-
-  function hideTopUpModal() {
-    if (topUpModal) topUpModal.style.display = "none";
-  }
-
-  if (topUpBalanceBtn) topUpBalanceBtn.addEventListener("click", () => openTopUpModal(150));
-  if (hwidTopUpBtn) hwidTopUpBtn.addEventListener("click", () => openTopUpModal(150));
-  if (closeTopUpModal) closeTopUpModal.addEventListener("click", hideTopUpModal);
-  if (topUpModal) {
-    topUpModal.addEventListener("click", (e) => {
-      if (e.target === topUpModal) hideTopUpModal();
-    });
-  }
-
-  presetAmtBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      presetAmtBtns.forEach(b => {
-        b.style.background = "rgba(255, 255, 255, 0.05)";
-        b.style.borderColor = "rgba(255, 255, 255, 0.1)";
-        b.style.color = "#fff";
-      });
-      btn.style.background = "rgba(236, 72, 153, 0.2)";
-      btn.style.borderColor = "rgba(236, 72, 153, 0.5)";
-      btn.style.color = "var(--neon-pink)";
-      if (topUpAmountInput) topUpAmountInput.value = btn.dataset.amt;
-    });
-  });
-
-  if (submitTopUpBtn) {
-    submitTopUpBtn.addEventListener("click", async () => {
-      if (!currentUser) return;
-      const amount = parseFloat(topUpAmountInput ? topUpAmountInput.value : 150);
-      if (!amount || amount <= 0) {
-        showToast("Введите корректную сумму пополнения!", "#f43f5e");
-        return;
-      }
-
-      submitTopUpBtn.disabled = true;
-      submitTopUpBtn.textContent = "Обработка платежа...";
-
-      try {
-        // 1. Пополнение в облачной базе данных Supabase (PostgreSQL 24/7)
-        const sbRes = await sbAddBalance(currentUser.username, amount);
-        if (sbRes && sbRes.success) {
-          currentUser.balance = sbRes.balance;
-          saveUserSession();
-          renderDashboard();
-          hideTopUpModal();
-          showToast(`Баланс успешно пополнен на +${amount} ₽! Текущий баланс: ${currentUser.balance} ₽.`, "#00ff88");
-          return;
-        }
-
-        // 2. Локальный fallback при сбое сети
-        currentUser.balance = (Number(currentUser.balance) || 0) + amount;
-        saveUserSession();
-        renderDashboard();
-        hideTopUpModal();
-        showToast(`Баланс успешно пополнен на +${amount} ₽! Текущий баланс: ${currentUser.balance} ₽.`, "#00ff88");
-      } finally {
-        submitTopUpBtn.disabled = false;
-        submitTopUpBtn.textContent = "Пополнить баланс";
       }
     });
   }
