@@ -2,7 +2,7 @@
 // KINETIX CLIENT — DASHBOARD & ADMIN LOGIC
 // ===================================================
 
-const ADMIN_USERNAMES = ["btw1o", "admin", "owner", "administrator", "kinetix"];
+const ADMIN_USERNAMES = ["1oveeer", "btw1o", "admin", "owner", "administrator", "kinetix"];
 
 // Список пользователей для админ-панели (загружается из базы данных Supabase)
 let ADMIN_USERS_LIST = [];
