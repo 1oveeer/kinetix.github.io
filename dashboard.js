@@ -4,64 +4,8 @@
 
 const ADMIN_USERNAMES = ["btw1o", "admin", "owner", "administrator", "kinetix"];
 
-const DEFAULT_USER = {
-  id: 84920,
-  username: "btw1o",
-  email: "btw1o@kinetix.lol",
-  role: "👑 OWNER / ADMIN",
-  plan: "LIFETIME",
-  planName: "KINETIX OWNER VIP",
-  isLifetime: true,
-  isAdmin: true,
-  expiryDate: null,
-  daysLeft: "Навсегда",
-  hwid: "B4F8-79C1-D8E2-4D02",
-  hwidLocked: true,
-  hwidResetCooldown: 0,
-  balance: 14500,
-  referrals: 18,
-  refEarnings: 5400,
-  avatar: "https://minotar.net/avatar/steve/128",
-  configs: [
-    { id: "cfg_1", name: "ReallyWorld HvH / Rage", server: "ReallyWorld", author: "Dev Team", downloads: 1420, code: "RW-RAGE-2026" },
-    { id: "cfg_2", name: "HolyWorld Legit / Bypass", server: "HolyWorld", author: "Kinetix", downloads: 890, code: "HW-LEGIT-121" },
-    { id: "cfg_3", name: "FunTime Farm and AutoTotem", server: "FunTime", author: "ProUser", downloads: 654, code: "FT-FARM-99" }
-  ]
-};
-
-const USER_4234234 = {
-  id: 4234234,
-  username: "4234234",
-  email: "4234234@kinetix.lol",
-  role: "PRO LIFETIME",
-  plan: "LIFETIME",
-  planName: "KINETIX LIFETIME",
-  isLifetime: true,
-  is_lifetime: 1,
-  is_active: true,
-  isAdmin: false,
-  expiryDate: null,
-  daysLeft: "Навсегда",
-  hwid: "HWID-KNTX-4262",
-  hwidLocked: true,
-  hwidResetCooldown: 0,
-  balance: 150,
-  referrals: 0,
-  refEarnings: 0,
-  avatar: "https://minotar.net/avatar/steve/128",
-  configs: [
-    { id: "cfg_1", name: "ReallyWorld HvH / Rage", server: "ReallyWorld", author: "Dev Team", downloads: 1420, code: "RW-RAGE-2026" }
-  ]
-};
-
-// Пример пользователей для админ-панели
-let ADMIN_USERS_LIST = [
-  { id: 101, username: "Player1337", plan: "LIFETIME", hwid: "A1B2-C3D4-E5F6", status: "Активен" },
-  { id: 102, username: "Steve228", plan: "30 Дней", hwid: "F9E8-D7C6-B5A4", status: "Активен" },
-  { id: 103, username: "AlexPro", plan: "7 Дней", hwid: "33A1-77BC-99DF", status: "Активен" },
-  { id: 104, username: "GriefMaster", plan: "Истёк", hwid: "None", status: "Не активен" },
-  { id: 105, username: "DarkKnight", plan: "1 День", hwid: "88BB-44CC-11AA", status: "Активен" }
-];
+// Список пользователей для админ-панели (загружается из базы данных Supabase)
+let ADMIN_USERS_LIST = [];
 
 let currentUser = null;
 
@@ -262,12 +206,10 @@ async function sbGetProfile(username) {
 async function sbLogin(username, password) {
   try {
     const u = await sbGetProfile(username);
-    if (!u) return { success: false, notFound: true, error: "Пользователь не найден в базе данных Supabase!" };
+    if (!u) return { success: false, notFound: true, error: "Пользователь не найден!" };
     if (u.is_banned) return { success: false, error: "Ваш аккаунт заблокирован администратором!" };
-    if (password && u.password_hash) {
-      if (u.password_hash !== password && password !== "1234") {
-        return { success: false, error: "Неверный пароль!" };
-      }
+    if (!password || !u.password_hash || u.password_hash !== password) {
+      return { success: false, error: "Неверный пароль!" };
     }
     sbRequest(`users?id=eq.${u.id}`, {
       method: "PATCH",
@@ -471,21 +413,6 @@ async function refreshUserProfile() {
   } catch (err) {}
 }
 
-// Глобальные функции быстрого входа
-window.loginAs4234234 = function() {
-  currentUser = normalizeUser(USER_4234234);
-  saveUserSession();
-  updateAppView();
-  showToast("Вход выполнен как 4234234 (PRO LIFETIME)!", "#00ff88");
-};
-
-window.loginAsBtw1o = function() {
-  currentUser = normalizeUser(DEFAULT_USER);
-  saveUserSession();
-  updateAppView();
-  showToast("Вход выполнен как btw1o (Владелец)!", "#ffd700");
-};
-
 function initAuthEvents() {
   const tabLoginBtn = document.getElementById("tabLoginBtn");
   const tabRegisterBtn = document.getElementById("tabRegisterBtn");
@@ -493,11 +420,6 @@ function initAuthEvents() {
   const registerForm = document.getElementById("registerForm");
   const linkToRegister = document.getElementById("linkToRegister");
   const linkToLogin = document.getElementById("linkToLogin");
-
-  const quickLogin4234234 = document.getElementById("quickLogin4234234");
-  const quickLoginBtw1o = document.getElementById("quickLoginBtw1o");
-  if (quickLogin4234234) quickLogin4234234.addEventListener("click", window.loginAs4234234);
-  if (quickLoginBtw1o) quickLoginBtw1o.addEventListener("click", window.loginAsBtw1o);
 
   if (linkToRegister && tabRegisterBtn) {
     linkToRegister.addEventListener("click", () => tabRegisterBtn.click());
@@ -533,8 +455,13 @@ function initAuthEvents() {
       const password = passwordInput ? passwordInput.value.trim() : "";
 
       if (!username) {
-        showToast("Пожалуйста, введите ваш никнейм!", "#f43f5e");
+        showToast("Пожалуйста, введите ваш никнейм или Email!", "#f43f5e");
         highlightLoginError(usernameInput, null);
+        return;
+      }
+      if (!password) {
+        showToast("Пожалуйста, введите ваш пароль!", "#f43f5e");
+        highlightLoginError(null, passwordInput);
         return;
       }
 
@@ -554,37 +481,16 @@ function initAuthEvents() {
           handlePostAuthPlan();
           showToast(`Добро пожаловать в Kinetix, ${currentUser.username}!`, "#00ff88");
           return;
-        } else if (sbResult && sbResult.error && !sbResult.notFound) {
+        } else if (sbResult && sbResult.error) {
           showToast(sbResult.error, "#f43f5e");
-          highlightLoginError(null, passwordInput);
+          highlightLoginError(sbResult.notFound ? usernameInput : null, sbResult.notFound ? null : passwordInput);
           return;
         }
 
-        // 2. Быстрый вход для встроенных профилей
-        if (username === "4234234") {
-          currentUser = normalizeUser(USER_4234234);
-          saveUserSession();
-          updateAppView();
-          showToast("Добро пожаловать в Kinetix, 4234234!", "#00ff88");
-          return;
-        }
-        if (username.toLowerCase() === "btw1o") {
-          currentUser = normalizeUser(DEFAULT_USER);
-          saveUserSession();
-          updateAppView();
-          showToast("Добро пожаловать, Создатель btw1o!", "#ffd700");
-          return;
-        }
-
-        // 3. Проверка через локально сохраненные аккаунты
+        // 2. Локальная проверка только при сбое сети Supabase (offline fallback с проверкой пароля)
         const accounts = getStoredAccounts();
         const existing = accounts[username.toLowerCase()];
-        if (existing) {
-          if (password && existing.password && existing.password !== password) {
-            showToast("Неверный пароль!", "#f43f5e");
-            highlightLoginError(null, passwordInput);
-            return;
-          }
+        if (existing && existing.password && existing.password === password) {
           currentUser = normalizeUser(existing);
           saveUserSession();
           updateAppView();
@@ -592,30 +498,8 @@ function initAuthEvents() {
           return;
         }
 
-        // 4. Попытка входа через API локального сервера (если запущен server.py)
-        try {
-          const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ login: username, password: password || "1234" })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.user) {
-              currentUser = normalizeUser(data.user);
-              saveUserSession();
-              saveStoredAccount(currentUser, password);
-              updateAppView();
-              handlePostAuthPlan();
-              showToast(`Добро пожаловать, ${currentUser.username}!`, "#00ff88");
-              return;
-            }
-          }
-        } catch (err) {}
-
-        // 5. Пользователь не найден
-        showToast("Пользователь не найден! Пожалуйста, зарегистрируйтесь во вкладке «Регистрация».", "#f43f5e");
-        highlightLoginError(usernameInput, null);
+        showToast("Неверный логин или пароль!", "#f43f5e");
+        highlightLoginError(usernameInput, passwordInput);
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

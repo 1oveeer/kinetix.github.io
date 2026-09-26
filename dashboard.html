@@ -79,21 +79,6 @@
           <button type="button" class="auth-tab-btn" id="tabRegisterBtn">Регистрация</button>
         </div>
 
-        <!-- Быстрый вход в 1 клик -->
-        <div style="margin-bottom: 20px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 14px;">
-          <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-            <span>⚡</span> <span>Быстрый выбор профиля:</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <button type="button" class="btn btn-xs" id="quickLogin4234234" onclick="loginAs4234234()" style="padding: 10px 8px; border-radius: 8px; background: rgba(0, 240, 255, 0.15); border: 1px solid rgba(0, 240, 255, 0.4); color: #00f0ff; font-weight: 700; cursor: pointer; text-align: center; font-size: 0.82rem;">
-              👤 4234234 (PRO)
-            </button>
-            <button type="button" class="btn btn-xs" id="quickLoginBtw1o" onclick="loginAsBtw1o()" style="padding: 10px 8px; border-radius: 8px; background: rgba(236, 72, 153, 0.15); border: 1px solid rgba(236, 72, 153, 0.4); color: var(--neon-pink); font-weight: 700; cursor: pointer; text-align: center; font-size: 0.82rem;">
-              👑 btw1o (Владелец)
-            </button>
-          </div>
-        </div>
-
         <!-- Форма входа -->
         <form id="loginForm">
           <div class="form-group">
@@ -103,7 +88,7 @@
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
-              <input type="text" class="dash-input" id="loginUsername" placeholder="Ваш никнейм (например: 4234234)" autocomplete="username">
+              <input type="text" class="dash-input" id="loginUsername" placeholder="Ваш никнейм или Email" autocomplete="username">
             </div>
           </div>
 
