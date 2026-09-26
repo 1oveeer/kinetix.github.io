@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>KINETIX CLIENT</title>
+  <script>
+    // GitHub Pages Smart SPA Router: перенаправление на чистые страницы
+    var path = window.location.pathname;
+    if (path.indexOf("/dashboard") !== -1) {
+      window.location.replace("/dashboard.html" + window.location.search + window.location.hash);
+    } else {
+      window.location.replace("/" + window.location.search + window.location.hash);
+    }
+  </script>
+</head>
+<body style="background: #04060c; color: #00f0ff; font-family: monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+  <div>✦ Перенаправление в KINETIX...</div>
+</body>
+</html>

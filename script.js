@@ -234,7 +234,7 @@ function initPricingModal() {
     // Если не зарегистрирован / не вошел -> сначала требуем регистрацию
     if (!user) {
       e.preventDefault();
-      window.location.href = `dashboard.html?action=register&plan=${encodeURIComponent(name || '')}&price=${encodeURIComponent(price || '')}`;
+      window.location.href = `dashboard?action=register&plan=${encodeURIComponent(name || '')}&price=${encodeURIComponent(price || '')}`;
       return;
     }
 

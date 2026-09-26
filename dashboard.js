@@ -868,7 +868,7 @@ function renderDashboard() {
   const refLinkInput = document.getElementById("refLinkInput");
   if (refLinkInput) {
     const origin = (window.location.origin && window.location.origin.includes("http")) ? window.location.origin : "https://kinetixclient.ru";
-    refLinkInput.value = `${origin}/dashboard.html?action=register&ref=${encodeURIComponent(currentUser.username.toLowerCase())}`;
+    refLinkInput.value = `${origin}/dashboard?action=register&ref=${encodeURIComponent(currentUser.username.toLowerCase())}`;
   }
 
   const statRefFriends = document.getElementById("statRefFriends");
