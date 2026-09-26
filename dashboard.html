@@ -596,15 +596,53 @@
                 <div class="dash-stat-card">
                   <div class="dash-stat-info">
                     <h4>Приглашено пользователей</h4>
-                    <div class="dash-stat-val" id="statRefFriends" style="color: var(--neon-cyan);">5</div>
+                    <div class="dash-stat-val" id="statRefFriends" style="color: var(--neon-cyan);">0</div>
                   </div>
                 </div>
                 <div class="dash-stat-card">
                   <div class="dash-stat-info">
                     <h4>Заработано рублей</h4>
-                    <div class="dash-stat-val" id="statRefEarned" style="color: var(--neon-green);">750 ₽</div>
+                    <div class="dash-stat-val" id="statRefEarned" style="color: var(--neon-green);">0 ₽</div>
                   </div>
                 </div>
+                <div class="dash-stat-card">
+                  <div class="dash-stat-info">
+                    <h4>Доступно к выводу</h4>
+                    <div class="dash-stat-val" id="statRefAvailable" style="color: #ffd700;">0 ₽</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Пошаговое руководство -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 28px 0;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px;">
+                  <div style="font-size: 1.8rem; margin-bottom: 10px;">🔗</div>
+                  <div style="font-weight: 700; color: var(--neon-cyan); margin-bottom: 6px;">1. Скопируйте ссылку</div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Отправьте вашу реферальную ссылку друзьям, в Discord или добавьте в описание видео.</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px;">
+                  <div style="font-size: 1.8rem; margin-bottom: 10px;">🎮</div>
+                  <div style="font-weight: 700; color: var(--neon-purple); margin-bottom: 6px;">2. Друг покупает ключ</div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">Пользователь регистрируется по вашей ссылке и покупает любую подписку Kinetix.</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px;">
+                  <div style="font-size: 1.8rem; margin-bottom: 10px;">💰</div>
+                  <div style="font-weight: 700; color: var(--neon-green); margin-bottom: 6px;">3. Получайте 20%</div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">20% от суммы каждой покупки друга моментально поступают на ваш баланс с возможностью вывода.</div>
+                </div>
+              </div>
+
+              <!-- Блок вывода средств -->
+              <div style="margin-top: 10px; padding: 20px; border-radius: 12px; background: rgba(0, 255, 136, 0.04); border: 1px solid rgba(0, 255, 136, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div>
+                  <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary); margin-bottom: 4px;">Вывод реферального заработка</div>
+                  <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Минимальная сумма выплаты — 300 ₽. Выплаты на СБП, Карты РФ, ЮMoney и USDT / TON.
+                  </div>
+                </div>
+                <button class="btn btn-primary" id="requestPayoutBtn" style="background: linear-gradient(135deg, #00f0ff, #00ff88); color: #000; font-weight: 700; border: none; padding: 10px 22px;">
+                  💸 Запросить выплату
+                </button>
               </div>
             </div>
           </div>
@@ -631,18 +669,20 @@
                 <button class="btn btn-primary" id="saveProfileBtn">Сохранить изменения</button>
               </div>
 
-              <!-- Блок управления правами администратора -->
+              <!-- Безопасность профиля -->
               <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-subtle); max-width: 540px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                  <span style="font-size: 1.3rem;">👑</span>
-                  <h4 style="font-size: 1.1rem; color: #ffd700;">Режим Администратора (Owner)</h4>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                  <span style="font-size: 1.3rem;">🛡️</span>
+                  <h4 style="font-size: 1.1rem; color: var(--text-primary);">Безопасность аккаунта</h4>
                 </div>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
-                  Включите режим администратора, чтобы получить доступ к панели генерации лицензионных ключей, управлению пользователями и финансовой статистике.
+                  Ваш аккаунт защищен облачной синхронизацией Supabase. Для смены пароля введите новый пароль ниже:
                 </p>
-                <button class="btn btn-primary btn-glow" id="toggleAdminBtn" style="background: linear-gradient(135deg, #ff3366, #ffd700); border-color: #ffd700; color: #000; font-weight: 800;">
-                  👑 Включить права Администратора
-                </button>
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label>Новый пароль</label>
+                  <input type="password" class="dash-input" id="newPasswordInput" placeholder="••••••••" style="padding-left: 16px;">
+                </div>
+                <button class="btn btn-secondary" id="changePasswordBtn">Обновить пароль</button>
               </div>
             </div>
           </div>
@@ -767,6 +807,55 @@
 
     </div>
   </main>
+
+  <!-- Модальное окно вывода средств -->
+  <div class="modal-overlay" id="payoutModalOverlay">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close" id="payoutModalClose">✕</button>
+      <div class="modal-header">
+        <div style="font-size: 0.8rem; font-weight: 700; color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+          ✦ Вывод реферальных средств
+        </div>
+        <h3 class="modal-title" style="font-size: 1.5rem; margin-bottom: 8px;">Заявка на выплату</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          Укажите способ выплаты и реквизиты. Заявка обрабатывается администратором в течение 24 часов.
+        </p>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Способ выплаты</label>
+          <select class="dash-input" id="payoutMethod" style="padding-left: 14px; background: rgba(13, 18, 31, 0.9);">
+            <option value="СБП (Номер телефона + Банк)">СБП (Система быстрых платежей РФ)</option>
+            <option value="Банковская карта (МИР/Visa/MC)">Банковская карта РФ (МИР, Visa, MC)</option>
+            <option value="ЮMoney">ЮMoney кошелек</option>
+            <option value="USDT (TRC-20)">USDT (TRC-20)</option>
+            <option value="TON">TON Wallet</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">Реквизиты (номер телефона / карты / кошелька)</label>
+          <input type="text" class="dash-input" id="payoutRequisites" placeholder="+7 999 123-45-67 (Т-Банк)" style="padding-left: 14px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+          <label style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">
+            <span>Сумма к выводу (руб.)</span>
+            <span id="payoutMaxAvailable" style="color: var(--neon-cyan); cursor: pointer;">Доступно: 0 ₽</span>
+          </label>
+          <input type="number" class="dash-input" id="payoutAmount" min="300" placeholder="Минимум 300" style="padding-left: 14px;">
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+          <button class="btn btn-secondary" id="payoutCancelBtn" style="flex: 1;">Отмена</button>
+          <button class="btn btn-primary" id="payoutSubmitBtn" style="flex: 2; background: linear-gradient(135deg, #00f0ff, #00ff88); color: #000; font-weight: 700; border: none;">
+            Подтвердить вывод
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="config.js"></script>
   <script src="dashboard.js"></script>

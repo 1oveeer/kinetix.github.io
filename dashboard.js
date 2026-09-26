@@ -34,17 +34,18 @@ function hasActiveSubscription(user) {
 function normalizeUser(u) {
   if (!u) return null;
   const uname = (u.username || "").trim();
-  const isAdm = ADMIN_USERNAMES.includes(uname.toLowerCase()) || Boolean(u.isAdmin) || (u.role && (u.role.includes("ADMIN") || u.role.includes("OWNER")));
+  const unameLower = uname.toLowerCase();
+  const isAdm = ADMIN_USERNAMES.includes(unameLower) || Boolean(u.role && (u.role.toUpperCase().includes("ADMIN") || u.role.toUpperCase().includes("OWNER")));
   const isLife = isAdm || Boolean(u.is_lifetime) || Boolean(u.isLifetime);
   const active = isAdm || isLife || Boolean(u.is_active) || u.sub_status === "active";
   const days = isLife ? 99999 : (typeof u.days_left !== "undefined" && u.days_left !== null ? Number(u.days_left) : (active ? 30 : 0));
-  const role = isAdm ? "👑 OWNER / ADMIN" : (u.role || (isLife ? "PRO LIFETIME" : (active ? "VIP" : "Пользователь")));
+  const role = isAdm ? "👑 OWNER / ADMIN" : (u.role && !u.role.includes("ADMIN") && !u.role.includes("OWNER") ? u.role : (isLife ? "PRO LIFETIME" : (active ? "VIP" : "Пользователь")));
   const plan = isAdm ? "KINETIX OWNER VIP" : (u.plan_name || u.planName || (isLife ? "KINETIX LIFETIME" : (active ? "KINETIX PREMIUM" : "Подписка не активирована")));
 
   return {
     id: u.id || Date.now(),
     username: uname,
-    email: u.email || `${uname.toLowerCase()}@kinetixclient.ru`,
+    email: u.email || `${unameLower}@kinetixclient.ru`,
     role: role,
     isAdmin: isAdm,
     isLifetime: isLife,
@@ -64,14 +65,11 @@ function normalizeUser(u) {
     hwidLocked: Boolean(u.hwid && u.hwid.trim()),
     hwid_resets: u.hwid_resets || 0,
     balance: Number(u.balance) || 0,
-    referrals: u.referrals || 0,
-    refEarnings: u.refEarnings || 0,
+    referrals: Number(u.referrals) || 0,
+    refEarnings: Number(u.refEarnings) || 0,
+    referred_by: u.referred_by || null,
     avatar: u.avatar || `https://minotar.net/avatar/${encodeURIComponent(uname || "steve")}/128`,
-    configs: u.configs && u.configs.length > 0 ? u.configs : [
-      { id: "cfg_1", name: "ReallyWorld HvH / Rage", server: "ReallyWorld", author: "Dev Team", downloads: 1420, code: "RW-RAGE-2026" },
-      { id: "cfg_2", name: "HolyWorld Legit / Bypass", server: "HolyWorld", author: "Kinetix", downloads: 890, code: "HW-LEGIT-121" },
-      { id: "cfg_3", name: "FunTime Farm and AutoTotem", server: "FunTime", author: "ProUser", downloads: 654, code: "FT-FARM-99" }
-    ]
+    configs: Array.isArray(u.configs) ? u.configs : []
   };
 }
 
@@ -112,6 +110,11 @@ function checkUrlActionParams() {
   const urlParams = new URLSearchParams(window.location.search);
   const action = urlParams.get("action");
   const plan = urlParams.get("plan");
+  const ref = urlParams.get("ref");
+
+  if (ref) {
+    localStorage.setItem("kinetix_referrer", ref.trim());
+  }
 
   if (!currentUser && (action === "register" || action === "buy")) {
     const tabRegisterBtn = document.getElementById("tabRegisterBtn");
@@ -158,10 +161,19 @@ function handlePostAuthPlan() {
 
 function checkAdminStatus() {
   if (!currentUser) return;
-  if (ADMIN_USERNAMES.includes(currentUser.username.toLowerCase())) {
+  const uname = (currentUser.username || "").trim().toLowerCase();
+  const isSuperUser = ADMIN_USERNAMES.includes(uname);
+  const hasDbAdmin = Boolean(currentUser.role && (currentUser.role.toUpperCase().includes("ADMIN") || currentUser.role.toUpperCase().includes("OWNER")));
+
+  if (isSuperUser || hasDbAdmin) {
     currentUser.isAdmin = true;
-    if (!currentUser.role.includes("ADMIN") && !currentUser.role.includes("OWNER")) {
+    if (!currentUser.role || (!currentUser.role.includes("ADMIN") && !currentUser.role.includes("OWNER"))) {
       currentUser.role = "👑 OWNER / ADMIN";
+    }
+  } else {
+    currentUser.isAdmin = false;
+    if (currentUser.role && (currentUser.role.includes("ADMIN") || currentUser.role.includes("OWNER"))) {
+      currentUser.role = currentUser.isLifetime ? "PRO LIFETIME" : (currentUser.is_active ? "VIP" : "Пользователь");
     }
   }
 }
@@ -727,20 +739,15 @@ function renderDashboard() {
     adminMenuBtn.style.display = currentUser.isAdmin ? "flex" : "none";
   }
 
-  // Кнопка переключения админа в Настройках
-  const toggleAdminBtn = document.getElementById("toggleAdminBtn");
-  if (toggleAdminBtn) {
-    if (currentUser.isAdmin) {
-      toggleAdminBtn.textContent = "✔ Права Администратора активны (Снять)";
-      toggleAdminBtn.style.background = "rgba(0, 255, 136, 0.15)";
-      toggleAdminBtn.style.borderColor = "var(--neon-green)";
-      toggleAdminBtn.style.color = "var(--neon-green)";
-    } else {
-      toggleAdminBtn.textContent = "👑 Включить права Администратора";
-      toggleAdminBtn.style.background = "linear-gradient(135deg, #ff3366, #ffd700)";
-      toggleAdminBtn.style.borderColor = "#ffd700";
-      toggleAdminBtn.style.color = "#000";
-    }
+  // Защита от несанкционированного открытия вкладки админа
+  const adminTabPane = document.getElementById("tab_admin");
+  if (adminTabPane && adminTabPane.classList.contains("active") && !currentUser.isAdmin) {
+    adminTabPane.classList.remove("active");
+    const overviewTab = document.getElementById("tab_overview");
+    if (overviewTab) overviewTab.classList.add("active");
+    document.querySelectorAll(".dash-menu-item").forEach(m => m.classList.remove("active"));
+    const overviewBtn = document.querySelector('[data-tab="overview"]');
+    if (overviewBtn) overviewBtn.classList.add("active");
   }
 
   // Статистика
@@ -859,12 +866,21 @@ function renderDashboard() {
 
   // Реферальная ссылка
   const refLinkInput = document.getElementById("refLinkInput");
-  if (refLinkInput) refLinkInput.value = `https://kinetix.lol/?ref=${currentUser.username.toLowerCase()}`;
+  if (refLinkInput) {
+    const origin = (window.location.origin && window.location.origin.includes("http")) ? window.location.origin : "https://kinetixclient.ru";
+    refLinkInput.value = `${origin}/dashboard.html?action=register&ref=${encodeURIComponent(currentUser.username.toLowerCase())}`;
+  }
 
   const statRefFriends = document.getElementById("statRefFriends");
   const statRefEarned = document.getElementById("statRefEarned");
+  const statRefAvailable = document.getElementById("statRefAvailable");
+  const payoutMaxAvailable = document.getElementById("payoutMaxAvailable");
+
+  const earnings = Number(currentUser.refEarnings) || 0;
   if (statRefFriends) statRefFriends.textContent = currentUser.referrals || 0;
-  if (statRefEarned) statRefEarned.textContent = `${currentUser.refEarnings || 0} ₽`;
+  if (statRefEarned) statRefEarned.textContent = `${earnings} ₽`;
+  if (statRefAvailable) statRefAvailable.textContent = `${earnings} ₽`;
+  if (payoutMaxAvailable) payoutMaxAvailable.textContent = `Доступно: ${earnings} ₽`;
 
   renderConfigsTable();
   if (currentUser.isAdmin) {
@@ -876,19 +892,37 @@ function renderDashboard() {
 
 function renderConfigsTable() {
   const tbody = document.getElementById("configsTableBody");
-  if (!tbody || !currentUser.configs) return;
+  if (!tbody) return;
 
-  tbody.innerHTML = currentUser.configs.map(cfg => `
+  const cfgs = Array.isArray(currentUser.configs) ? currentUser.configs : [];
+  if (cfgs.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; padding: 48px 20px; color: var(--text-secondary);">
+          <div style="font-size: 2.4rem; margin-bottom: 12px; opacity: 0.8;">☁️</div>
+          <div style="font-weight: 700; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 6px;">У вас пока нет сохранённых облачных конфигов</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px; line-height: 1.5;">
+            Здесь будут отображаться ваши личные настройки чита. Вы можете выгружать конфиги прямо из клиента в игре или добавить новый конфиг вручную.
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="document.getElementById('addConfigBtn').click()">+ Загрузить свой конфиг</button>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = cfgs.map(cfg => `
     <tr>
       <td>
         <strong style="color: var(--text-primary); font-size: 0.95rem;">${cfg.name}</strong>
       </td>
-      <td><span style="color: var(--neon-cyan); font-family: var(--font-mono); font-weight: 600;">${cfg.server}</span></td>
-      <td><span style="color: var(--text-muted);">${cfg.author}</span></td>
+      <td><span style="color: var(--neon-cyan); font-family: var(--font-mono); font-weight: 600;">${cfg.server || 'Custom'}</span></td>
+      <td><span style="color: var(--text-muted);">${cfg.author || currentUser.username}</span></td>
       <td><span style="font-family: var(--font-mono); background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-subtle);">${cfg.code}</span></td>
       <td style="text-align: right;">
         <button class="btn btn-sm btn-secondary" onclick="copyConfigCode('${cfg.code}')" style="margin-right: 6px;">Скопировать</button>
-        <button class="btn btn-sm btn-primary" onclick="downloadConfig('${cfg.name}')">Скачать .cfg</button>
+        <button class="btn btn-sm btn-secondary" onclick="downloadConfig('${cfg.name}')" style="margin-right: 6px;">Скачать .cfg</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteConfig('${cfg.id}')" title="Удалить конфиг">✕</button>
       </td>
     </tr>
   `).join('');
@@ -943,6 +977,10 @@ function initDashboardEvents() {
   menuItems.forEach(item => {
     item.addEventListener("click", () => {
       const tabTarget = item.dataset.tab;
+      if (tabTarget === "admin" && (!currentUser || !currentUser.isAdmin)) {
+        showToast("Доступ запрещен. Требуются права администратора.", "#f43f5e");
+        return;
+      }
 
       menuItems.forEach(m => m.classList.remove("active"));
       tabPanes.forEach(p => p.classList.remove("active"));
@@ -977,21 +1015,6 @@ function initDashboardEvents() {
         return;
       }
 
-      // Секретный ключ администратора
-      if (val === "ADMIN" || val === "ROOT" || val === "KINETIX-ADMIN" || val === "OWNER") {
-        currentUser.isAdmin = true;
-        currentUser.isLifetime = true;
-        currentUser.plan = "LIFETIME";
-        currentUser.planName = "KINETIX OWNER VIP";
-        currentUser.role = "👑 OWNER / ADMIN";
-        currentUser.daysLeft = "Навсегда";
-        saveUserSession();
-        renderDashboard();
-        keyInput.value = "";
-        showToast("👑 ПРАВА АДМИНИСТРАТОРА АКТИВИРОВАНЫ!", "#ffd700");
-        return;
-      }
-
       activateBtn.disabled = true;
       activateBtn.textContent = "Активация...";
 
@@ -1019,7 +1042,7 @@ function initDashboardEvents() {
         }
 
         // 2. Локальный fallback при сбое сети
-        const isLife = val.includes("LIFE") || val.includes("ADMIN") || val.includes("ROOT") || val.includes("OWNER");
+        const isLife = val.includes("LIFE");
         const days = isLife ? 99999 : (val.includes("7D") ? 7 : (val.includes("1D") ? 1 : 30));
         currentUser.is_active = true;
         currentUser.sub_status = "active";
@@ -1078,23 +1101,130 @@ function initDashboardEvents() {
     });
   }
 
-  // Кнопка переключения роли Администратора в Настройках
-  const toggleAdminBtn = document.getElementById("toggleAdminBtn");
-  if (toggleAdminBtn) {
-    toggleAdminBtn.addEventListener("click", () => {
-      currentUser.isAdmin = !currentUser.isAdmin;
-      if (currentUser.isAdmin) {
-        currentUser.role = "👑 OWNER / ADMIN";
-        currentUser.planName = "KINETIX OWNER VIP";
-        currentUser.isLifetime = true;
-        showToast("👑 Права Администратора выданы! Открыт доступ к Админ-панели.", "#ffd700");
-      } else {
-        currentUser.role = "PRO LIFETIME";
-        currentUser.planName = "KINETIX LIFETIME";
-        showToast("Режим администратора отключен.", "#00f0ff");
+  // Безопасность профиля: смена пароля
+  const changePasswordBtn = document.getElementById("changePasswordBtn");
+  const newPasswordInput = document.getElementById("newPasswordInput");
+  if (changePasswordBtn && newPasswordInput) {
+    changePasswordBtn.addEventListener("click", async () => {
+      const newPass = newPasswordInput.value.trim();
+      if (!newPass || newPass.length < 4) {
+        showToast("Пароль должен содержать не менее 4 символов!", "#f43f5e");
+        return;
       }
-      saveUserSession();
-      renderDashboard();
+      changePasswordBtn.disabled = true;
+      changePasswordBtn.textContent = "Сохранение...";
+      try {
+        if (currentUser.id) {
+          await sbRequest(`users?id=eq.${currentUser.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ password_hash: newPass })
+          });
+        }
+        saveStoredAccount(currentUser, newPass);
+        newPasswordInput.value = "";
+        showToast("Пароль успешно обновлен в облачной базе!", "#00ff88");
+      } catch(e) {
+        showToast("Ошибка при сохранении пароля", "#f43f5e");
+      } finally {
+        changePasswordBtn.disabled = false;
+        changePasswordBtn.textContent = "Обновить пароль";
+      }
+    });
+  }
+
+  // Реферальная система: модальное окно вывода средств
+  const requestPayoutBtn = document.getElementById("requestPayoutBtn");
+  const payoutModalOverlay = document.getElementById("payoutModalOverlay");
+  const payoutModalClose = document.getElementById("payoutModalClose");
+  const payoutCancelBtn = document.getElementById("payoutCancelBtn");
+  const payoutSubmitBtn = document.getElementById("payoutSubmitBtn");
+  const payoutAmount = document.getElementById("payoutAmount");
+  const payoutMethod = document.getElementById("payoutMethod");
+  const payoutRequisites = document.getElementById("payoutRequisites");
+  const payoutMaxAvailable = document.getElementById("payoutMaxAvailable");
+
+  if (requestPayoutBtn && payoutModalOverlay) {
+    requestPayoutBtn.addEventListener("click", () => {
+      const earnings = Number(currentUser.refEarnings) || 0;
+      if (earnings < 300) {
+        showToast(`Минимальная сумма для вывода — 300 ₽. Ваш баланс: ${earnings} ₽`, "#f43f5e");
+        return;
+      }
+      if (payoutAmount) payoutAmount.value = earnings;
+      payoutModalOverlay.classList.add("active");
+    });
+  }
+  if (payoutMaxAvailable && payoutAmount) {
+    payoutMaxAvailable.addEventListener("click", () => {
+      payoutAmount.value = Number(currentUser.refEarnings) || 0;
+    });
+  }
+  if (payoutModalClose && payoutModalOverlay) {
+    payoutModalClose.addEventListener("click", () => payoutModalOverlay.classList.remove("active"));
+  }
+  if (payoutCancelBtn && payoutModalOverlay) {
+    payoutCancelBtn.addEventListener("click", () => payoutModalOverlay.classList.remove("active"));
+  }
+  if (payoutModalOverlay) {
+    payoutModalOverlay.addEventListener("click", (e) => {
+      if (e.target === payoutModalOverlay) payoutModalOverlay.classList.remove("active");
+    });
+  }
+
+  if (payoutSubmitBtn) {
+    payoutSubmitBtn.addEventListener("click", async () => {
+      const method = payoutMethod ? payoutMethod.value : "СБП";
+      const reqs = payoutRequisites ? payoutRequisites.value.trim() : "";
+      const amt = parseInt(payoutAmount ? payoutAmount.value : "0", 10);
+      const earnings = Number(currentUser.refEarnings) || 0;
+
+      if (!reqs) {
+        showToast("Укажите реквизиты для выплаты!", "#f43f5e");
+        return;
+      }
+      if (isNaN(amt) || amt < 300) {
+        showToast("Минимальная сумма к выводу — 300 ₽!", "#f43f5e");
+        return;
+      }
+      if (amt > earnings) {
+        showToast(`Сумма превышает доступный баланс (${earnings} ₽)!`, "#f43f5e");
+        return;
+      }
+
+      payoutSubmitBtn.disabled = true;
+      payoutSubmitBtn.textContent = "Отправка заявки...";
+
+      try {
+        currentUser.refEarnings = earnings - amt;
+        saveUserSession();
+
+        sbRequest("payout_requests", {
+          method: "POST",
+          body: JSON.stringify({
+            username: currentUser.username,
+            method: method,
+            requisites: reqs,
+            amount: amt,
+            status: "pending",
+            created_at: new Date().toISOString()
+          })
+        }).catch(() => {});
+
+        if (currentUser.id) {
+          sbRequest(`users?id=eq.${currentUser.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ refEarnings: currentUser.refEarnings })
+          }).catch(() => {});
+        }
+
+        if (payoutModalOverlay) payoutModalOverlay.classList.remove("active");
+        if (payoutRequisites) payoutRequisites.value = "";
+        renderDashboard();
+        showToast(`Заявка на вывод ${amt} ₽ принята! Выплата поступит в течение 24 часов.`, "#00ff88");
+      } finally {
+        payoutSubmitBtn.disabled = false;
+        payoutSubmitBtn.textContent = "Подтвердить вывод";
+      }
     });
   }
 
@@ -1333,6 +1463,20 @@ function downloadConfig(name) {
   URL.revokeObjectURL(url);
   showToast(`Конфиг '${name}' скачивается`, "#00ff88");
 }
+
+window.deleteConfig = function(id) {
+  if (!currentUser || !currentUser.configs) return;
+  if (!confirm("Вы действительно хотите удалить этот облачный конфиг?")) return;
+  currentUser.configs = currentUser.configs.filter(c => c.id !== id);
+  saveUserSession();
+  renderConfigsTable();
+  showToast("Конфиг удален из вашего списка", "#00f0ff");
+};
+
+window.promptCreateConfig = function() {
+  const addBtn = document.getElementById("addConfigBtn");
+  if (addBtn) addBtn.click();
+};
 
 function showToast(message, color = "#00f0ff") {
   let container = document.getElementById("toastContainer");
