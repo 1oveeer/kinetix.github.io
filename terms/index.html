@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Пользовательское соглашение (Публичная оферта) — KINETIX CLIENT</title>
+  <meta name="description" content="Пользовательское соглашение и публичная оферта на оказание услуг и предоставление доступа к цифровым продуктам KINETIX CLIENT.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Шрифты -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .doc-page {
+      padding: 120px 0 80px;
+      position: relative;
+      z-index: 1;
+    }
+    .doc-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .doc-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .doc-breadcrumb a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    .doc-breadcrumb a:hover {
+      text-decoration: underline;
+    }
+    .doc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      padding: 4px 14px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .doc-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 900;
+      line-height: 1.18;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #ffffff 30%, var(--neon-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .doc-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    .doc-actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(16, 21, 34, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 36px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .doc-actions-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .doc-card {
+      background: rgba(14, 18, 28, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: clamp(24px, 5vw, 44px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(16px);
+      line-height: 1.8;
+      color: #e2e8f0;
+      font-size: 1rem;
+    }
+    .doc-card h2 {
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 36px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .doc-card h2:first-of-type {
+      margin-top: 0;
+    }
+    .doc-card h2 span.section-num {
+      color: var(--neon-cyan);
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+    }
+    .doc-card p {
+      margin-bottom: 16px;
+      color: #cbd5e1;
+    }
+    .doc-card blockquote {
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 3px solid var(--neon-cyan);
+      padding: 12px 18px;
+      margin: 12px 0 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      color: #cbd5e1;
+    }
+    .doc-card ul {
+      margin: 12px 0 20px 24px;
+      list-style-type: none;
+    }
+    .doc-card ul li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      color: #cbd5e1;
+    }
+    .doc-card ul li::before {
+      content: "▹";
+      position: absolute;
+      left: 0;
+      color: var(--neon-cyan);
+      font-weight: bold;
+    }
+    .contacts-highlight-box {
+      margin-top: 36px;
+      padding: 24px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.06), rgba(168, 85, 247, 0.06));
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: var(--radius-md);
+    }
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .contact-item {
+      background: rgba(6, 7, 10, 0.6);
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    .contact-item-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .contact-item-val {
+      font-weight: 700;
+      color: #fff;
+    }
+    .contact-item-val a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+    }
+    .contact-item-val a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Фоновый эффект -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- Навигация -->
+  <header class="header">
+    <div class="container header-container">
+      <a href="index.html" class="logo" style="text-decoration: none;">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">KINETIX</span>
+        <span class="logo-badge">RELEASE v1.2</span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="index.html#features">Преимущества</a></li>
+          <li><a href="index.html#pricing">Тарифы</a></li>
+          <li><a href="terms.html" class="active" style="color: var(--neon-cyan);">Оферта</a></li>
+          <li><a href="privacy.html">Политика</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <a href="dashboard" class="btn btn-secondary btn-sm" id="navDashBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Личный кабинет</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Тело документа -->
+  <main class="doc-page">
+    <div class="doc-container">
+      <div class="doc-breadcrumb">
+        <a href="index.html">Главная</a>
+        <span>/</span>
+        <a href="index.html#pricing">Документы</a>
+        <span>/</span>
+        <span>Пользовательское соглашение</span>
+      </div>
+
+      <div class="doc-badge">✦ Официальная редакция • от 12 августа 2026 г.</div>
+      <h1 class="doc-title">Пользовательское соглашение<br><span style="font-size: 0.75em; font-weight: 700; color: var(--neon-cyan);">(Публичная оферта)</span></h1>
+      <p class="doc-subtitle">
+        Настоящий договор является публичной офертой и регулирует отношения между Исполнителем и Заказчиком по предоставлению цифровых товаров, лицензий и сопутствующих услуг в сервисе KINETIX CLIENT.
+      </p>
+
+      <div class="doc-actions-bar">
+        <div class="doc-actions-left">
+          <a href="https://telegra.ph/PUBLICHNAYA-OFERTA-08-12-15" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            Открыть оригинал на Telegra.ph
+          </a>
+          <a href="privacy.html" class="btn btn-sm btn-secondary">
+            Политика конфиденциальности →
+          </a>
+        </div>
+        <button class="btn btn-sm btn-secondary" onclick="window.print();" style="cursor: pointer;">
+          🖨️ Печать / Сохранить в PDF
+        </button>
+      </div>
+
+      <article class="doc-card">
+        <h2><span class="section-num">1.</span> Общие положения</h2>
+        <blockquote>
+          <strong>1.1.</strong> Настоящая оферта (далее — «Договор») регулирует отношения между Исполнителем и Заказчиком в связи с предоставлением Исполнителем цифровых товаров и/или услуг посредством онлайн-сервиса (далее — «Сервис»).
+        </blockquote>
+        <blockquote>
+          <strong>1.2.</strong> Использование Сервиса, регистрация, оформление заказа, оплата услуг или получение доступа к цифровым материалам означают полное и безоговорочное принятие Заказчиком условий настоящего Договора (акцепт оферты).
+        </blockquote>
+        <blockquote>
+          <strong>1.3.</strong> В случае несогласия с условиями Договора Заказчик обязан немедленно прекратить использование Сервиса.
+        </blockquote>
+
+        <h2><span class="section-num">2.</span> Предмет договора</h2>
+        <blockquote>
+          <strong>2.1.</strong> В соответствии с условиями настоящего Договора Исполнитель принимает на себя обязательство по предоставлению Заказчику цифровых товаров и/или услуг, а Заказчик обязуется принять указанные товары и услуги и произвести их оплату в порядке и на условиях, определённых настоящей офертой.
+        </blockquote>
+        <blockquote>
+          <strong>2.2.</strong> Доступ к услугам и цифровым товарам обеспечивается посредством программных, технических и информационных средств Сервиса (включая личный кабинет, автоматическую выдачу лицензионных ключей и лоадер клиента).
+        </blockquote>
+        <blockquote>
+          <strong>2.3.</strong> Конкретный состав, стоимость, срок действия и условия предоставления соответствующего товара или услуги указываются в Сервисе до момента оплаты.
+        </blockquote>
+
+        <h2><span class="section-num">3.</span> Порядок предоставления услуг</h2>
+        <blockquote>
+          <strong>3.1.</strong> После успешной оплаты Заказчику автоматически предоставляется доступ к приобретённому товару или услуге (генерация лицензионного ключа и доступ к файлам) в порядке, предусмотренном Сервисом.
+        </blockquote>
+        <blockquote>
+          <strong>3.2.</strong> Заказчик самостоятельно обеспечивает наличие необходимых технических средств и доступа к сети Интернет для использования Сервиса.
+        </blockquote>
+        <blockquote>
+          <strong>3.3.</strong> Срок предоставления доступа определяется условиями выбранного тарифа (7 дней, 30 дней, либо бессрочно при выборе тарифа Lifetime).
+        </blockquote>
+
+        <h2><span class="section-num">4.</span> Оплата и возвраты</h2>
+        <blockquote>
+          <strong>4.1.</strong> Стоимость товаров и услуг определяется тарифами, опубликованными в Сервисе на момент оформления заказа.
+        </blockquote>
+        <blockquote>
+          <strong>4.2.</strong> Оплата производится посредством доступных в Сервисе платёжных инструментов (включая СБП, банковские карты, электронные кошельки и платёжных провайдеров).
+        </blockquote>
+        <blockquote>
+          <strong>4.3.</strong> Возврат денежных средств осуществляется в соответствии с применимым законодательством и условиями соответствующего товара или услуги.
+        </blockquote>
+        <blockquote>
+          <strong>4.4.</strong> При возникновении технической проблемы Заказчик вправе обратиться в службу поддержки для проверки обстоятельств и решения вопроса о восстановлении доступа или возврате денежных средств в предусмотренных случаях.
+        </blockquote>
+
+        <h2><span class="section-num">5.</span> Права и обязанности Заказчика</h2>
+        <blockquote>
+          <strong>5.1.</strong> Заказчик обязуется использовать Сервис исключительно законным способом и соблюдать условия настоящего Договора.
+        </blockquote>
+        <blockquote>
+          <strong>5.2.</strong> Запрещается использовать Сервис для мошенничества, нарушения законодательства, распространения вредоносного программного обеспечения, нарушения прав третьих лиц или иных противоправных действий.
+        </blockquote>
+        <blockquote>
+          <strong>5.3.</strong> Заказчик несёт ответственность за достоверность предоставляемой им информации и законность своих действий при использовании Сервиса.
+        </blockquote>
+
+        <h2><span class="section-num">6.</span> Интеллектуальная собственность</h2>
+        <blockquote>
+          <strong>6.1.</strong> Материалы, исходный код, графические элементы и программные решения, размещённые в Сервисе, охраняются законодательством об интеллектуальной собственности.
+        </blockquote>
+        <blockquote>
+          <strong>6.2.</strong> Приобретение товара или услуги предоставляет право личного использования и не означает передачу Заказчику исключительных авторских прав.
+        </blockquote>
+        <blockquote>
+          <strong>6.3.</strong> Копирование, перепродажа, декомпиляция, распространение, публикация и передача материалов третьим лицам запрещены, если иное прямо не предусмотрено условиями конкретного товара или законодательством.
+        </blockquote>
+
+        <h2><span class="section-num">7.</span> Права Исполнителя</h2>
+        <blockquote>
+          <strong>7.1.</strong> Исполнитель вправе временно ограничить работу Сервиса для проведения плановых технических работ, обновлений или устранения неисправностей.
+        </blockquote>
+        <blockquote>
+          <strong>7.2.</strong> Исполнитель вправе ограничить или прекратить доступ Заказчика к Сервису при нарушении настоящего Договора или применимого законодательства.
+        </blockquote>
+        <blockquote>
+          <strong>7.3.</strong> Исполнитель вправе изменять функциональность Сервиса, условия тарифов и настоящий Договор с обязательной публикацией актуальной редакции в Сервисе.
+        </blockquote>
+
+        <h2><span class="section-num">8.</span> Ответственность</h2>
+        <blockquote>
+          <strong>8.1.</strong> Исполнитель не гарантирует бесперебойную работу Сервиса и достижение Заказчиком какого-либо конкретного результата, если такой результат прямо не предусмотрен условиями приобретённой услуги.
+        </blockquote>
+        <blockquote>
+          <strong>8.2.</strong> Исполнитель не несёт ответственности за сбои, вызванные действиями третьих лиц, операторов связи, платёжных систем, техническими неисправностями или иными обстоятельствами, находящимися вне разумного контроля Исполнителя.
+        </blockquote>
+        <blockquote>
+          <strong>8.3.</strong> Заказчик самостоятельно несёт ответственность за использование предоставленных товаров, материалов и услуг.
+        </blockquote>
+
+        <h2><span class="section-num">9.</span> Конфиденциальность</h2>
+        <blockquote>
+          <strong>9.1.</strong> Обработка персональных данных осуществляется в строгом соответствии с отдельной <a href="privacy.html" style="color: var(--neon-cyan);">Политикой конфиденциальности</a>.
+        </blockquote>
+        <blockquote>
+          <strong>9.2.</strong> Исполнитель принимает разумные технические и организационные меры для защиты конфиденциальной информации Пользователей.
+        </blockquote>
+
+        <h2><span class="section-num">10.</span> Заключительные положения и контакты</h2>
+        <blockquote>
+          <strong>10.1.</strong> Актуальная редакция настоящего Договора публикуется в Сервисе на странице <code>https://kinetixclient.ru/terms</code>.
+        </blockquote>
+        <blockquote>
+          <strong>10.2.</strong> Продолжение использования Сервиса после публикации новой редакции означает принятие её условий в той мере, в какой это допускается применимым законодательством.
+        </blockquote>
+        <blockquote>
+          <strong>10.3.</strong> По вопросам использования Сервиса, оплаты, технической помощи и оформления возвратов Заказчик может обратиться в службу поддержки по следующим контактам:
+        </blockquote>
+
+        <div class="contacts-highlight-box">
+          <div style="font-weight: 700; color: #fff; font-size: 1.1rem; margin-bottom: 4px;">
+            Служба клиентской поддержки KINETIX
+          </div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem;">
+            Мы на связи 24/7 и готовы оперативно помочь с любыми вопросами по заказам, оплате и лицензиям.
+          </div>
+
+          <div class="contacts-grid">
+            <div class="contact-item">
+              <div class="contact-item-title">Электронная почта</div>
+              <div class="contact-item-val"><a href="mailto:support@kinetixclient.ru">support@kinetixclient.ru</a></div>
+            </div>
+            <div class="contact-item">
+              <div class="contact-item-title">Telegram поддержки</div>
+              <div class="contact-item-val"><a href="https://t.me/kinetixclient_bot" target="_blank">@kinetixclient_bot</a></div>
+            </div>
+            <div class="contact-item">
+              <div class="contact-item-title">Официальный канал</div>
+              <div class="contact-item-val"><a href="https://t.me/kinetix_client" target="_blank">@kinetix_client</a></div>
+            </div>
+            <div class="contact-item">
+              <div class="contact-item-title">График работы</div>
+              <div class="contact-item-val" style="color: var(--neon-green);">24/7 (Круглосуточно)</div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <!-- Подвал сайта -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-col brand-col">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">KINETIX</span>
+        </div>
+        <p class="footer-desc">
+          Высокотехнологичный игровой клиент с передовыми алгоритмами обходов и абсолютной оптимизацией для Fabric 1.21.x.
+        </p>
+        <div class="footer-status">
+          <span class="status-dot"></span> Система работает в штатном режиме
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Навигация</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Главная страница</a></li>
+          <li><a href="dashboard" style="color: var(--neon-cyan); font-weight: 600;">Личный кабинет</a></li>
+          <li><a href="index.html#pricing">Тарифные планы</a></li>
+          <li><a href="index.html#features">Преимущества</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Документация</h4>
+        <ul class="footer-links">
+          <li><a href="terms.html" style="color: var(--neon-cyan); font-weight: 600;">Пользовательское соглашение</a></li>
+          <li><a href="privacy.html">Политика конфиденциальности</a></li>
+          <li><a href="https://telegra.ph/PUBLICHNAYA-OFERTA-08-12-15" target="_blank" rel="noopener">Оригинал оферты (Telegra.ph) ↗</a></li>
+          <li><a href="https://telegra.ph/POLITIKA-KONFIDENCIALNOSTI-08-12-99" target="_blank" rel="noopener">Оригинал политики (Telegra.ph) ↗</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Служба поддержки</h4>
+        <ul class="footer-links">
+          <li><a href="mailto:support@kinetixclient.ru" style="color: var(--neon-cyan);">✉ support@kinetixclient.ru</a></li>
+          <li><a href="https://t.me/kinetixclient_bot" target="_blank" rel="noopener">✈ Бот поддержки: @kinetixclient_bot</a></li>
+          <li><a href="https://t.me/kinetix_client" target="_blank" rel="noopener">📢 Канал: @kinetix_client</a></li>
+          <li style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-top: 4px;">
+            🕒 Режим: 24/7 (Ежедневно)<br>⚡ Ответ: 5–15 мин
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container" style="border-top: 1px solid var(--border-subtle); padding-top: 24px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <p class="disclaimer-text" style="margin-bottom: 0; max-width: 650px;">
+        Все права на Minecraft принадлежат Mojang Studios / Microsoft. Продукт Kinetix является независимой модификацией. Использование сервиса означает полное согласие с <a href="terms.html" style="color: var(--neon-cyan);">Публичной офертой</a> и <a href="privacy.html" style="color: var(--neon-cyan);">Политикой конфиденциальности</a>.
+      </p>
+      <div class="copyright">
+        © 2026 KINETIX. Все права защищены.
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -13,10 +13,16 @@ const CONFIG = {
   supabaseUrl: "https://dnoxciyqvitnjipgxxje.supabase.co",
   supabaseKey: "sb_publishable_CE6L0c5QJNMVwI4-VByz9Q_n9_p3yqE",
   
-  // Социальные сети и контакты
-  telegramBot: "https://t.me/kinetixclient_bot", // Ссылка на вашего Telegram бота оплаты
+  // Социальные сети, контакты службы поддержки и документы
+  telegramBot: "https://t.me/kinetixclient_bot", // Ссылка на вашего Telegram бота
   telegramLink: "https://t.me/kinetix_client", // Ссылка на ваш канал
-  telegramManager: "",
+  telegramManager: "https://t.me/kinetixclient_bot", // Техническая поддержка
+  supportEmail: "support@kinetixclient.ru", // Официальная почта службы поддержки
+  supportWorkingHours: "24/7 (Ежедневно, круглосуточно)",
+  privacyPolicyUrl: "privacy.html",
+  termsUrl: "terms.html",
+  telegraphPrivacy: "https://telegra.ph/POLITIKA-KONFIDENCIALNOSTI-08-12-99",
+  telegraphOffer: "https://telegra.ph/PUBLICHNAYA-OFERTA-08-12-15",
   discordLink: "",
   
   // Статистика (отображается на главной)

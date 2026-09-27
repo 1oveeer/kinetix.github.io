@@ -40,13 +40,22 @@ function initFromConfig() {
   const footerTgChannel = document.getElementById("footerTgChannel");
   const footerTgSupport = document.getElementById("footerTgSupport");
   const footerDiscord = document.getElementById("footerDiscord");
+  const footerEmail = document.getElementById("footerEmail");
+  const footerPrivacy = document.getElementById("footerPrivacy");
+  const footerTerms = document.getElementById("footerTerms");
 
   if (navTelegram) navTelegram.href = CONFIG.telegramLink || "#";
   if (heroDiscord) heroDiscord.href = CONFIG.discordLink || "#";
   if (ctaTgBtn) ctaTgBtn.href = CONFIG.telegramBot || "https://t.me/kinetixclient_bot";
   if (footerTgChannel) footerTgChannel.href = CONFIG.telegramLink || "#";
-  if (footerTgSupport) footerTgSupport.href = CONFIG.telegramManager || CONFIG.telegramLink || "#";
+  if (footerTgSupport) footerTgSupport.href = CONFIG.telegramManager || CONFIG.telegramBot || "#";
   if (footerDiscord) footerDiscord.href = CONFIG.discordLink || "#";
+  if (footerEmail && CONFIG.supportEmail) {
+    footerEmail.href = `mailto:${CONFIG.supportEmail}`;
+    footerEmail.textContent = `✉ ${CONFIG.supportEmail}`;
+  }
+  if (footerPrivacy && CONFIG.privacyPolicyUrl) footerPrivacy.href = CONFIG.privacyPolicyUrl;
+  if (footerTerms && CONFIG.termsUrl) footerTerms.href = CONFIG.termsUrl;
 
   // Проверка сессии в шапке сайта
   const savedUser = localStorage.getItem("kinetix_user");

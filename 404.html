@@ -5,9 +5,13 @@
   <title>KINETIX CLIENT</title>
   <script>
     // GitHub Pages Smart SPA Router: перенаправление на чистые страницы
-    var path = window.location.pathname;
+    var path = window.location.pathname.toLowerCase();
     if (path.indexOf("/dashboard") !== -1) {
       window.location.replace("/dashboard.html" + window.location.search + window.location.hash);
+    } else if (path.indexOf("/privacy") !== -1 || path.indexOf("/policy") !== -1) {
+      window.location.replace("/privacy.html" + window.location.search + window.location.hash);
+    } else if (path.indexOf("/terms") !== -1 || path.indexOf("/offer") !== -1) {
+      window.location.replace("/terms.html" + window.location.search + window.location.hash);
     } else {
       window.location.replace("/" + window.location.search + window.location.hash);
     }
