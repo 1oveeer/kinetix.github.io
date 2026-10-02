@@ -1978,6 +1978,26 @@ input:checked + .slider:before {
   border: 1px solid transparent;
 }
 
+button.pay-option {
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.site-option {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.25);
+  color: #fff;
+}
+
+.site-option:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: #00f0ff;
+  transform: translateX(4px);
+}
+
 .tg-option {
   background: rgba(41, 182, 246, 0.08);
   border-color: rgba(41, 182, 246, 0.25);

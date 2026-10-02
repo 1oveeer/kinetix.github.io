@@ -212,10 +212,21 @@ function initPricingModal() {
   const modalPlanName = document.getElementById("modalPlanName");
   const modalPlanPrice = document.getElementById("modalPlanPrice");
   const modalPlanBadge = document.getElementById("modalPlanBadge");
+  const modalPaySite = document.getElementById("modalPaySite");
+  const modalPaySiteTitle = document.getElementById("modalPaySiteTitle");
+  const modalPaySiteSub = document.getElementById("modalPaySiteSub");
+  const sitePayArrow = document.getElementById("sitePayArrow");
   const modalPayTg = document.getElementById("modalPayTg");
-  const modalPayDs = document.getElementById("modalPayDs");
+  const modalUserName = document.getElementById("modalUserName");
 
   if (!modal) return;
+
+  let currentPlan = {
+    id: "month",
+    name: "Месячный",
+    price: "300 ₽",
+    badge: "Хит выбора"
+  };
 
   document.addEventListener("click", (e) => {
     const buyBtn = e.target.closest(".btn-buy");
@@ -228,7 +239,7 @@ function initPricingModal() {
     const badge = buyBtn.getAttribute("data-plan-badge") || "";
     const planId = buyBtn.getAttribute("data-plan-id") || "month";
 
-    // Проверяем, авторизован ли пользователь на сайте
+    // 1. Проверяем, зарегистрирован / авторизован ли пользователь на сайте
     const savedUser = localStorage.getItem("kinetix_user");
     let user = null;
     if (savedUser) {
@@ -237,30 +248,140 @@ function initPricingModal() {
       } catch (err) {}
     }
 
-    // Открываем модалку подтверждения покупки через RollyPay
+    // ТРЕБОВАНИЕ 2: Если пользователь ещё не зарегистрировался — перенаправляем на регистрацию!
+    if (!user || !user.username) {
+      window.location.href = `dashboard.html?action=register&plan=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}`;
+      return;
+    }
+
+    currentPlan = { id: planId, name: name, price: price, badge: badge };
+
+    // 2. Открываем модалку подтверждения покупки
     if (modalPlanName) modalPlanName.textContent = name;
     if (modalPlanPrice) modalPlanPrice.textContent = price;
     if (modalPlanBadge) modalPlanBadge.textContent = badge;
+    if (modalUserName) modalUserName.textContent = user.username;
 
-    const modalUserName = document.getElementById("modalUserName");
-    if (modalUserName) {
-      modalUserName.textContent = user ? user.username : "Гость (аккаунт в Telegram)";
-    }
-
+    // Ссылка на оплату в Telegram боте (Опция 2)
     const tgBase = CONFIG.telegramBot || "https://t.me/kinetixclient_bot";
     const cleanBase = tgBase.split("?")[0].replace(/\/$/, "");
-    const userSuffix = user && user.username ? `_${encodeURIComponent(user.username)}` : "";
-    
     if (modalPayTg) {
-      modalPayTg.href = `${cleanBase}?start=buy_${planId}${userSuffix}`;
+      modalPayTg.href = `${cleanBase}?start=buy_${planId}_${encodeURIComponent(user.username)}`;
     }
 
-    if (modalPayDs) {
-      modalPayDs.href = CONFIG.discordLink || "https://discord.gg";
+    // Сброс состояния кнопки оплаты на сайте (Опция 1)
+    if (modalPaySite) {
+      modalPaySite.disabled = false;
+      if (modalPaySiteTitle) modalPaySiteTitle.textContent = "💳 Оплатить на сайте";
+      if (modalPaySiteSub) modalPaySiteSub.textContent = "СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket";
+      if (sitePayArrow) sitePayArrow.textContent = "→";
     }
 
     modal.classList.add("active");
   });
+
+  // Обработка кнопки "Оплатить на сайте" (RollyPay)
+  if (modalPaySite) {
+    modalPaySite.addEventListener("click", async () => {
+      if (modalPaySite.disabled) return;
+
+      const savedUser = localStorage.getItem("kinetix_user");
+      let user = null;
+      if (savedUser) {
+        try { user = JSON.parse(savedUser); } catch(e) {}
+      }
+      if (!user || !user.username) {
+        window.location.href = `dashboard.html?action=register&plan=${encodeURIComponent(currentPlan.name)}`;
+        return;
+      }
+
+      modalPaySite.disabled = true;
+      if (modalPaySiteTitle) modalPaySiteTitle.textContent = "⏳ Создание счёта RollyPay...";
+      if (modalPaySiteSub) modalPaySiteSub.textContent = "Подготавливаем безопасную оплату, пожалуйста подождите...";
+      if (sitePayArrow) sitePayArrow.textContent = "⏳";
+
+      const reqKey = "PAYREQ-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+      const isLife = currentPlan.id === "lifetime";
+      const days = currentPlan.id === "week" ? 7 : (isLife ? 99999 : 30);
+
+      try {
+        const postRes = await fetch(`${CONFIG.supabaseUrl}/rest/v1/license_keys`, {
+          method: "POST",
+          headers: {
+            "apikey": CONFIG.supabaseKey,
+            "Authorization": `Bearer ${CONFIG.supabaseKey}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({
+            key_code: reqKey,
+            plan_name: currentPlan.id,
+            duration_days: days,
+            is_lifetime: isLife,
+            is_used: false,
+            used_by: user.username
+          })
+        });
+
+        if (!postRes.ok) {
+          throw new Error("Не удалось создать запрос на оплату");
+        }
+
+        const data = await postRes.json();
+        const rowId = data && data[0] && data[0].id;
+        if (!rowId) {
+          throw new Error("Не получен ID запроса");
+        }
+
+        // Опрашиваем готовность счёта от бота
+        let attempts = 0;
+        const maxAttempts = 25; // 25 * 600ms = 15s
+        const pollTimer = setInterval(async () => {
+          attempts++;
+          try {
+            const checkRes = await fetch(`${CONFIG.supabaseUrl}/rest/v1/license_keys?id=eq.${rowId}&select=key_code,is_used`, {
+              headers: {
+                "apikey": CONFIG.supabaseKey,
+                "Authorization": `Bearer ${CONFIG.supabaseKey}`
+              }
+            });
+            const checkData = await checkRes.json();
+            const keyVal = checkData && checkData[0] && checkData[0].key_code;
+
+            if (keyVal && (keyVal.startsWith("https://") || keyVal.startsWith("http://"))) {
+              clearInterval(pollTimer);
+              if (modalPaySiteTitle) modalPaySiteTitle.textContent = "✅ Перенаправление на оплату...";
+              if (modalPaySiteSub) modalPaySiteSub.textContent = "Переходим на страницу RollyPay...";
+              window.location.href = keyVal;
+              return;
+            } else if (keyVal && keyVal.startsWith("ERROR:")) {
+              clearInterval(pollTimer);
+              throw new Error(keyVal);
+            }
+          } catch (err) {
+            console.error("Polling error:", err);
+          }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(pollTimer);
+            modalPaySite.disabled = false;
+            if (modalPaySiteTitle) modalPaySiteTitle.textContent = "💳 Оплатить на сайте";
+            if (modalPaySiteSub) modalPaySiteSub.textContent = "СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket";
+            if (sitePayArrow) sitePayArrow.textContent = "→";
+            alert("Сервер оплаты ответил с задержкой. Вы можете перейти к оплате через Telegram.");
+          }
+        }, 600);
+
+      } catch (err) {
+        console.error("Payment error:", err);
+        modalPaySite.disabled = false;
+        if (modalPaySiteTitle) modalPaySiteTitle.textContent = "💳 Оплатить на сайте";
+        if (modalPaySiteSub) modalPaySiteSub.textContent = "СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket";
+        if (sitePayArrow) sitePayArrow.textContent = "→";
+        alert("Произошла ошибка при создании счета. Пожалуйста, воспользуйтесь оплатой через Telegram.");
+      }
+    });
+  }
 
   const closeModal = () => modal.classList.remove("active");
 

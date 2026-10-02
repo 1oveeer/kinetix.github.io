@@ -50,7 +50,7 @@ const CONFIG = {
         "Приоритетная поддержка в Discord"
       ],
       isPopular: false,
-      buttonText: "Купить (RollyPay)",
+      buttonText: "Купить на 7 дней",
       paymentUrl: "https://t.me/kinetixclient_bot?start=buy_week"
     },
     {
@@ -68,7 +68,7 @@ const CONFIG = {
         "Быстрый ответ саппорта 24/7"
       ],
       isPopular: false,
-      buttonText: "Купить (RollyPay)",
+      buttonText: "Купить на 30 дней",
       paymentUrl: "https://t.me/kinetixclient_bot?start=buy_month"
     },
     {
