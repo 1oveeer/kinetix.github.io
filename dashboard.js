@@ -883,6 +883,41 @@ function renderDashboard() {
   if (statRefAvailable) statRefAvailable.textContent = `${earnings} ₽`;
   if (payoutMaxAvailable) payoutMaxAvailable.textContent = `Доступно: ${earnings} ₽`;
 
+  // Привязка Telegram
+  const quickTgBindBtn = document.getElementById("quickTgBindBtn");
+  const tgBoundBadge = document.getElementById("tgBoundBadge");
+  const tgStatusText = document.getElementById("tgStatusText");
+  const tgSettingsBindBtn = document.getElementById("tgSettingsBindBtn");
+  const bindLink = `https://t.me/kinetixclient_bot?start=bind_${encodeURIComponent(currentUser.username)}`;
+
+  if (quickTgBindBtn) quickTgBindBtn.href = bindLink;
+  if (tgSettingsBindBtn) tgSettingsBindBtn.href = bindLink;
+
+  if (currentUser.telegram_id) {
+    if (tgBoundBadge) {
+      tgBoundBadge.textContent = "Привязан";
+      tgBoundBadge.style.color = "var(--neon-green)";
+      tgBoundBadge.style.borderColor = "var(--neon-green)";
+    }
+    if (tgStatusText) {
+      const tgNick = currentUser.telegram_username ? `@${currentUser.telegram_username}` : `ID: ${currentUser.telegram_id}`;
+      tgStatusText.innerHTML = `Статус: <strong style="color: var(--neon-green);">Привязан к Telegram (${tgNick})</strong>`;
+    }
+    if (quickTgBindBtn) quickTgBindBtn.textContent = "Открыть Telegram-бота";
+    if (tgSettingsBindBtn) tgSettingsBindBtn.textContent = "Открыть Telegram-бота";
+  } else {
+    if (tgBoundBadge) {
+      tgBoundBadge.textContent = "Связать";
+      tgBoundBadge.style.color = "var(--neon-cyan)";
+      tgBoundBadge.style.borderColor = "rgba(0, 240, 255, 0.3)";
+    }
+    if (tgStatusText) {
+      tgStatusText.innerHTML = `Статус: <strong style="color: #f43f5e;">Не привязан</strong>`;
+    }
+    if (quickTgBindBtn) quickTgBindBtn.textContent = "Привязать в Telegram";
+    if (tgSettingsBindBtn) tgSettingsBindBtn.textContent = "✈️ Привязать Telegram (в 1 клик)";
+  }
+
   renderConfigsTable();
   if (currentUser.isAdmin) {
     loadAdminUsers();
