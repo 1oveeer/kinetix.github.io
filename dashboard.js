@@ -37,10 +37,10 @@ function normalizeUser(u) {
   const unameLower = uname.toLowerCase();
   const isAdm = ADMIN_USERNAMES.includes(unameLower) || Boolean(u.role && (u.role.toUpperCase().includes("ADMIN") || u.role.toUpperCase().includes("OWNER")));
   const isLife = isAdm || Boolean(u.is_lifetime) || Boolean(u.isLifetime);
-  const active = isAdm || isLife || Boolean(u.is_active) || u.sub_status === "active";
-  const days = isLife ? 99999 : (typeof u.days_left !== "undefined" && u.days_left !== null ? Number(u.days_left) : (active ? 30 : 0));
+  const active = (isAdm || isLife) ? true : hasActiveSubscription(u);
+  const days = isLife ? 99999 : (active ? (typeof u.days_left !== "undefined" && u.days_left !== null ? Number(u.days_left) : 30) : 0);
   const role = isAdm ? "👑 OWNER / ADMIN" : (u.role && !u.role.includes("ADMIN") && !u.role.includes("OWNER") ? u.role : (isLife ? "PRO LIFETIME" : (active ? "VIP" : "Пользователь")));
-  const plan = isAdm ? "KINETIX OWNER VIP" : (u.plan_name || u.planName || (isLife ? "KINETIX LIFETIME" : (active ? "KINETIX PREMIUM" : "Подписка не активирована")));
+  const plan = isAdm ? "KINETIX OWNER VIP" : (isLife ? "KINETIX LIFETIME" : (active ? (u.plan_name || u.planName || "KINETIX PREMIUM") : (u.expires_at ? "Подписка истекла" : "Подписка не активирована")));
 
   return {
     id: u.id || Date.now(),
@@ -77,6 +77,7 @@ function initApp() {
   loadUserSession();
   initAuthEvents();
   initDashboardEvents();
+  initDashboardPricingModal();
   initAdminEvents();
   initCanvasParticles();
   if (currentUser) {
@@ -1318,6 +1319,164 @@ function initDashboardEvents() {
       showToast("Профиль и скин успешно обновлены!", "#00ff88");
     });
   }
+}
+
+// 2.5 Модальное окно оформления покупки в Личном Кабинете (2 варианта: Сайт и Telegram)
+function initDashboardPricingModal() {
+  const modal = document.getElementById("purchaseModal");
+  if (!modal) return;
+
+  const closeBtn = document.getElementById("modalClose");
+  const modalPlanName = document.getElementById("modalPlanName");
+  const modalPlanPrice = document.getElementById("modalPlanPrice");
+  const modalPlanBadge = document.getElementById("modalPlanBadge");
+  const modalPaySite = document.getElementById("modalPaySite");
+  const modalPaySiteTitle = document.getElementById("modalPaySiteTitle");
+  const modalPaySiteSub = document.getElementById("modalPaySiteSub");
+  const sitePayArrow = document.getElementById("sitePayArrow");
+  const modalPayTg = document.getElementById("modalPayTg");
+  const modalUserName = document.getElementById("modalUserName");
+
+  let currentPlan = {
+    id: "month",
+    name: "Месячный (30 Дней)",
+    price: "300 ₽",
+    badge: "Хит выбора"
+  };
+
+  document.addEventListener("click", (e) => {
+    const buyBtn = e.target.closest(".btn-dash-buy, .btn-buy");
+    if (!buyBtn) return;
+
+    e.preventDefault();
+
+    const planId = buyBtn.getAttribute("data-plan-id") || "month";
+    const name = buyBtn.getAttribute("data-plan-name") || "Тариф";
+    const price = buyBtn.getAttribute("data-plan-price") || "300 ₽";
+    const badge = buyBtn.getAttribute("data-plan-badge") || "Тариф";
+
+    currentPlan = { id: planId, name: name, price: price, badge: badge };
+
+    if (modalPlanName) modalPlanName.textContent = name;
+    if (modalPlanPrice) modalPlanPrice.textContent = price;
+    if (modalPlanBadge) modalPlanBadge.textContent = badge;
+    if (modalUserName) modalUserName.textContent = currentUser ? currentUser.username : "Пользователь";
+
+    // Ссылка на Telegram
+    const tgBase = CONFIG.telegramBot || "https://t.me/kinetixclient_bot";
+    const cleanBase = tgBase.split("?")[0].replace(/\/$/, "");
+    const userSuffix = currentUser && currentUser.username ? `_${encodeURIComponent(currentUser.username)}` : "";
+    if (modalPayTg) {
+      modalPayTg.href = `${cleanBase}?start=buy_${planId}${userSuffix}`;
+    }
+
+    // Сброс кнопки оплаты на сайте
+    if (modalPaySite) {
+      modalPaySite.disabled = false;
+      if (modalPaySiteTitle) modalPaySiteTitle.textContent = "💳 Оплатить на сайте";
+      if (modalPaySiteSub) modalPaySiteSub.textContent = "СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket";
+      if (sitePayArrow) sitePayArrow.textContent = "→";
+    }
+
+    modal.classList.add("active");
+  });
+
+  if (modalPaySite) {
+    modalPaySite.addEventListener("click", async () => {
+      if (modalPaySite.disabled) return;
+      if (!currentUser || !currentUser.username) {
+        showToast("Пожалуйста, войдите в аккаунт для оплаты!", "#f43f5e");
+        return;
+      }
+
+      modalPaySite.disabled = true;
+      if (modalPaySiteTitle) modalPaySiteTitle.textContent = "⏳ Создание счёта RollyPay...";
+      if (modalPaySiteSub) modalPaySiteSub.textContent = "Связываемся со шлюзом оплаты, подождите...";
+      if (sitePayArrow) sitePayArrow.textContent = "⏳";
+
+      const reqKey = "PAYREQ-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+      const isLife = currentPlan.id === "lifetime";
+      const days = currentPlan.id === "week" ? 7 : (isLife ? 99999 : 30);
+
+      try {
+        const postRes = await sbRequest("license_keys", {
+          method: "POST",
+          body: JSON.stringify({
+            key_code: reqKey,
+            plan_name: currentPlan.id,
+            duration_days: days,
+            is_lifetime: isLife,
+            is_used: false,
+            used_by: currentUser.username
+          })
+        });
+
+        if (!postRes || !postRes.ok) {
+          throw new Error("Не удалось создать запрос на оплату");
+        }
+
+        const data = await postRes.json();
+        const rowId = data && data[0] && data[0].id;
+        if (!rowId) {
+          throw new Error("Не получен ID запроса");
+        }
+
+        let attempts = 0;
+        const maxAttempts = 25;
+        const pollTimer = setInterval(async () => {
+          attempts++;
+          try {
+            const checkRes = await sbRequest(`license_keys?id=eq.${rowId}&select=key_code,is_used`);
+            if (checkRes && checkRes.ok) {
+              const checkData = await checkRes.json();
+              const keyVal = checkData && checkData[0] && checkData[0].key_code;
+
+              if (keyVal && (keyVal.startsWith("https://") || keyVal.startsWith("http://"))) {
+                clearInterval(pollTimer);
+                if (modalPaySiteTitle) modalPaySiteTitle.textContent = "✅ Перенаправление на оплату...";
+                if (modalPaySiteSub) modalPaySiteSub.textContent = "Переходим на страницу RollyPay...";
+                window.location.href = keyVal;
+                return;
+              } else if (keyVal && keyVal.startsWith("ERROR:")) {
+                clearInterval(pollTimer);
+                throw new Error(keyVal);
+              }
+            }
+          } catch (err) {
+            console.error("Polling error:", err);
+          }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(pollTimer);
+            modalPaySite.disabled = false;
+            if (modalPaySiteTitle) modalPaySiteTitle.textContent = "💳 Оплатить на сайте";
+            if (modalPaySiteSub) modalPaySiteSub.textContent = "СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket";
+            if (sitePayArrow) sitePayArrow.textContent = "→";
+            showToast("Сервер оплаты ответил с задержкой. Воспользуйтесь оплатой через Telegram.", "#f43f5e");
+          }
+        }, 600);
+
+      } catch (err) {
+        console.error("Payment error:", err);
+        modalPaySite.disabled = false;
+        if (modalPaySiteTitle) modalPaySiteTitle.textContent = "💳 Оплатить на сайте";
+        if (modalPaySiteSub) modalPaySiteSub.textContent = "СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket";
+        if (sitePayArrow) sitePayArrow.textContent = "→";
+        showToast("Ошибка создания счета. Попробуйте оплатить через Telegram-бота.", "#f43f5e");
+      }
+    });
+  }
+
+  const closeModal = () => modal.classList.remove("active");
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
 }
 
 // 3. Логика Админ-панели (Генератор ключей и управление)

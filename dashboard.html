@@ -529,18 +529,18 @@
                 <div class="dl-card" style="padding: 20px;">
                   <h4>7 Дней (Неделя)</h4>
                   <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-cyan);">150 ₽</p>
-                  <a href="https://t.me/kinetixclient_bot?start=buy_week" target="_blank" class="btn btn-sm btn-secondary">Купить на 7 дней</a>
+                  <button type="button" class="btn btn-sm btn-secondary btn-dash-buy" data-plan-id="week" data-plan-name="Недельный (7 Дней)" data-plan-price="150 ₽" data-plan-badge="Оптимально">Купить на 7 дней</button>
                 </div>
                 <div class="dl-card" style="padding: 20px;">
                   <h4>30 Дней (Месяц)</h4>
                   <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-cyan);">300 ₽</p>
-                  <a href="https://t.me/kinetixclient_bot?start=buy_month" target="_blank" class="btn btn-sm btn-secondary">Купить на 30 дней</a>
+                  <button type="button" class="btn btn-sm btn-secondary btn-dash-buy" data-plan-id="month" data-plan-name="Месячный (30 Дней)" data-plan-price="300 ₽" data-plan-badge="Хит выбора">Купить на 30 дней</button>
                 </div>
                 <div class="dl-card" style="padding: 20px; border-color: var(--border-glow);">
                   <div style="color: var(--neon-cyan); font-weight: 800; font-size: 0.8rem; margin-bottom: 4px;">ХИТ ВЫБОРА</div>
                   <h4>LIFETIME НАВСЕГДА</h4>
                   <p class="dl-desc" style="font-size: 1.2rem; font-weight: 800; color: var(--neon-green);">800 ₽</p>
-                  <a href="https://t.me/kinetixclient_bot?start=buy_lifetime" target="_blank" class="btn btn-sm btn-primary btn-glow">Забрать навсегда</a>
+                  <button type="button" class="btn btn-sm btn-primary btn-glow btn-dash-buy" data-plan-id="lifetime" data-plan-name="LIFETIME НАВСЕГДА" data-plan-price="800 ₽" data-plan-badge="НАВСЕГДА • ВЫГОДНО">Забрать навсегда</button>
                 </div>
 
                 <div style="grid-column: 1 / -1; margin-top: 10px; padding: 14px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
@@ -902,7 +902,72 @@
     </div>
   </div>
 
-  <script src="config.js?v=2.2"></script>
-  <script src="dashboard.js?v=2.2"></script>
+  <!-- Модальное окно покупки (Purchase Modal - 2 варианта оплаты) -->
+  <div class="modal-overlay" id="purchaseModal">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" aria-label="Закрыть">✕</button>
+
+      <div class="modal-header">
+        <div class="modal-badge" id="modalPlanBadge">Тариф</div>
+        <h3 class="modal-title" id="modalPlanName">Оформление подписки</h3>
+        <div class="modal-price-tag">
+          К оплате: <span class="modal-price" id="modalPlanPrice">300 ₽</span>
+        </div>
+        <div class="modal-user-pill" style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 20px; padding: 4px 12px; font-size: 0.82rem; color: #a1a1aa;">
+          <span>Покупатель:</span> <strong id="modalUserName" style="color: var(--neon-cyan);">—</strong>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-instructions">
+          Выберите удобный способ оплаты подписки:
+        </p>
+
+        <div class="payment-options">
+          <button type="button" class="pay-option site-option" id="modalPaySite">
+            <div class="pay-option-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </div>
+            <div class="pay-option-text">
+              <strong id="modalPaySiteTitle">💳 Оплатить на сайте</strong>
+              <span id="modalPaySiteSub">СБП (0%), Карты РФ (МИР), Криптовалюта, xrocket</span>
+            </div>
+            <span class="pay-arrow" id="sitePayArrow">→</span>
+          </button>
+
+          <a href="#" class="pay-option tg-option" id="modalPayTg" target="_blank" rel="noopener">
+            <div class="pay-option-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+            </div>
+            <div class="pay-option-text">
+              <strong>✈️ Оплатить через Telegram</strong>
+              <span>Быстрый счет в боте @kinetixclient_bot</span>
+            </div>
+            <span class="pay-arrow">→</span>
+          </a>
+        </div>
+
+        <div class="modal-legal-notice" style="margin-top: 14px; margin-bottom: 12px; font-size: 0.78rem; color: var(--text-muted); text-align: center; line-height: 1.5;">
+          Нажимая кнопку оплаты, вы подтверждаете согласие с <a href="terms.html" target="_blank" style="color: var(--neon-cyan); text-decoration: underline;">Пользовательским соглашением</a> и <a href="privacy.html" target="_blank" style="color: var(--neon-cyan); text-decoration: underline;">Политикой конфиденциальности</a>.
+        </div>
+
+        <div class="modal-footer-note">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Выдача лицензионного ключа происходит автоматически сразу после проверки транзакции.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js?v=2.4"></script>
+  <script src="dashboard.js?v=2.4"></script>
 </body>
 </html>
