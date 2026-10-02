@@ -1502,52 +1502,6 @@ function initDashboardPricingModal() {
     });
   }
 
-  const modalPayTest = document.getElementById("modalPayTest");
-  if (modalPayTest) {
-    modalPayTest.addEventListener("click", async () => {
-      if (!currentUser || !currentUser.username) {
-        showToast("Войдите в аккаунт для теста!", "#f43f5e");
-        return;
-      }
-      modal.classList.remove("active");
-      showToast("🧪 Симуляция успешной оплаты...", "#00f0ff");
-
-      const planId = currentPlan ? currentPlan.id : "month";
-      const isLife = planId === "lifetime";
-      const days = isLife ? 99999 : (planId === "week" ? 7 : 30);
-      const planName = currentPlan ? currentPlan.name : "KINETIX PREMIUM";
-
-      // Активируем в Supabase
-      const expDate = isLife ? null : new Date(Date.now() + days * 86400000).toISOString();
-      await sbRequest(`users?username=ilike.${encodeURIComponent(currentUser.username)}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          is_active: true,
-          sub_status: "active",
-          role: isLife ? "PRO LIFETIME" : "VIP",
-          plan_name: `KINETIX ${planName}`,
-          is_lifetime: isLife,
-          days_left: days,
-          expires_at: expDate
-        })
-      });
-
-      currentUser.is_active = true;
-      currentUser.sub_status = "active";
-      currentUser.plan_name = `KINETIX ${planName}`;
-      currentUser.planName = `KINETIX ${planName}`;
-      currentUser.days_left = days;
-      currentUser.daysLeft = isLife ? "Навсегда" : `${days} дн.`;
-      currentUser.expires_at = expDate;
-      currentUser.is_lifetime = isLife ? 1 : 0;
-      currentUser.isLifetime = isLife;
-      saveUserSession();
-      renderDashboard();
-
-      showToast("🎉 Тестовая оплата успешна! Подписка активирована!", "#00ff88");
-    });
-  }
-
   const closeModal = () => modal.classList.remove("active");
   if (closeBtn) closeBtn.addEventListener("click", closeModal);
   modal.addEventListener("click", (e) => {
