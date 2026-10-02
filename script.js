@@ -221,17 +221,14 @@ function initPricingModal() {
     const buyBtn = e.target.closest(".btn-buy");
     if (!buyBtn) return;
 
-    const href = buyBtn.getAttribute("href");
-    if (href && href !== "#") {
-      // Прямой переход по ссылке оплаты Lava.top
-      return;
-    }
+    e.preventDefault();
 
-    const name = buyBtn.getAttribute("data-plan-name");
-    const price = buyBtn.getAttribute("data-plan-price");
-    const badge = buyBtn.getAttribute("data-plan-badge");
+    const name = buyBtn.getAttribute("data-plan-name") || "Тариф";
+    const price = buyBtn.getAttribute("data-plan-price") || "";
+    const badge = buyBtn.getAttribute("data-plan-badge") || "";
+    const planId = buyBtn.getAttribute("data-plan-id") || "month";
 
-    // 1. Проверяем, авторизован ли пользователь
+    // Проверяем, авторизован ли пользователь на сайте
     const savedUser = localStorage.getItem("kinetix_user");
     let user = null;
     if (savedUser) {
@@ -240,39 +237,26 @@ function initPricingModal() {
       } catch (err) {}
     }
 
-    // Если не зарегистрирован / не вошел -> сначала требуем регистрацию
-    if (!user) {
-      e.preventDefault();
-      window.location.href = `dashboard?action=register&plan=${encodeURIComponent(name || '')}&price=${encodeURIComponent(price || '')}`;
-      return;
-    }
-
-    // Если авторизован -> открываем модалку с подтверждением покупки
+    // Открываем модалку подтверждения покупки через RollyPay
     if (modalPlanName) modalPlanName.textContent = name;
     if (modalPlanPrice) modalPlanPrice.textContent = price;
     if (modalPlanBadge) modalPlanBadge.textContent = badge;
 
     const modalUserName = document.getElementById("modalUserName");
     if (modalUserName) {
-      modalUserName.textContent = user.username;
+      modalUserName.textContent = user ? user.username : "Гость (аккаунт в Telegram)";
     }
 
-    const planId = buyBtn.getAttribute("data-plan-id") || "month";
-    const message = encodeURIComponent(`Привет! Мой аккаунт: ${user.username}. Хочу купить клиент ${CONFIG.clientName} [Тариф: ${name}, Цена: ${price}]. Как оплатить?`);
-    const tgBase = CONFIG.telegramBot || CONFIG.telegramManager || CONFIG.telegramLink || "https://t.me/";
+    const tgBase = CONFIG.telegramBot || "https://t.me/kinetixclient_bot";
+    const cleanBase = tgBase.split("?")[0].replace(/\/$/, "");
+    const userSuffix = user && user.username ? `_${encodeURIComponent(user.username)}` : "";
     
     if (modalPayTg) {
-      // Если ссылка ведет на бота, открываем deep-link на нужный тариф с никнеймом
-      if (CONFIG.telegramBot || tgBase.toLowerCase().includes("bot")) {
-        const cleanBase = tgBase.split("?")[0].replace(/\/$/, "");
-        modalPayTg.href = `${cleanBase}?start=buy_${planId}_${encodeURIComponent(user.username)}`;
-      } else {
-        modalPayTg.href = tgBase.includes("?") ? `${tgBase}&text=${message}` : `${tgBase}?text=${message}`;
-      }
+      modalPayTg.href = `${cleanBase}?start=buy_${planId}${userSuffix}`;
     }
 
     if (modalPayDs) {
-      modalPayDs.href = CONFIG.discordLink || "#";
+      modalPayDs.href = CONFIG.discordLink || "https://discord.gg";
     }
 
     modal.classList.add("active");

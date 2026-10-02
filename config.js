@@ -50,8 +50,8 @@ const CONFIG = {
         "Приоритетная поддержка в Discord"
       ],
       isPopular: false,
-      buttonText: "Купить на 7 дней",
-      paymentUrl: "https://app.lava.top/products/ab20d720-5ade-429e-bd75-2782a16123dc"
+      buttonText: "Купить (RollyPay)",
+      paymentUrl: "https://t.me/kinetixclient_bot?start=buy_week"
     },
     {
       id: "month",
@@ -68,8 +68,8 @@ const CONFIG = {
         "Быстрый ответ саппорта 24/7"
       ],
       isPopular: false,
-      buttonText: "Купить на 30 дней",
-      paymentUrl: "https://app.lava.top/products/58d8185c-59cc-4ce6-889c-8041d303323e"
+      buttonText: "Купить (RollyPay)",
+      paymentUrl: "https://t.me/kinetixclient_bot?start=buy_month"
     },
     {
       id: "lifetime",
@@ -87,7 +87,7 @@ const CONFIG = {
       ],
       isPopular: true,
       buttonText: "Забрать навсегда",
-      paymentUrl: "https://app.lava.top/products/432ce03f-4c9f-4ae9-828a-6133ed30ea8b"
+      paymentUrl: "https://t.me/kinetixclient_bot?start=buy_lifetime"
     }
   ],
 
